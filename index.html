@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goya Operations Portal</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body { background-color: #f4f5f7; color: #333333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+    .main-container { max-width: 950px; margin: 30px auto; }
+    .card { background-color: #ffffff; border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); padding: 30px; }
+    .portal-title { color: #1f4e78; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+    .nav-pills .nav-link { color: #555; font-weight: 600; border-radius: 10px; padding: 10px 20px; margin-right: 10px; background-color: #e9ecef; }
+    .nav-pills .nav-link.active { background-color: #1f4e78; color: #ffffff; }
+    .form-label { font-weight: 600; color: #495057; }
+    .form-control, .form-select { border-radius: 8px; border: 1px solid #ced4da; padding: 10px; background-color: #f8f9fa; }
+    .form-control:focus, .form-select:focus { background-color: #fff; border-color: #1f4e78; box-shadow: 0 0 0 0.25rem rgba(31, 78, 120, 0.15); }
+    .btn-custom { background-color: #1f4e78; color: #fff; border-radius: 8px; padding: 10px 20px; font-weight: 600; border: none; transition: 0.2s; }
+    .btn-custom:hover { background-color: #153754; color: #fff; }
+    .btn-submit { background-color: #28a745; color: white; width: 100%; font-size: 1.1rem; padding: 12px; border-radius: 8px; border: none; font-weight: 600; }
+    .btn-submit:hover { background-color: #1e7e34; }
+    .table-container { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+    .table { margin-bottom: 0; }
+    .table thead { background-color: #1f4e78; color: #ffffff; }
+    .table th, .table td { vertical-align: middle; padding: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="container main-container">
+  <h2 class="text-center mb-4 portal-title">🟢 GOYA OPERATIONS PORTAL</h2>
+  
+  <ul class="nav nav-pills mb-4 justify-content-center" id="pills-tab" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pills-order" type="button">🛒 Send Order</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-history" type="button" onclick="loadHistory()">📜 Order History</button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="pills-tabContent">
+    <!-- TAB 1: SEND ORDER -->
+    <div class="tab-pane fade show active" id="pills-order" role="tabpanel">
+      <div class="card">
+        <h4 class="mb-4" style="color: #1f4e78;">Create Purchase Request</h4>
+        
+        <!-- আপনার কাঙ্ক্ষিত কাস্টম সিকোয়েন্স -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-5">
+            <label class="form-label">Search Item</label>
+            <input type="text" id="itemSearch" class="form-control" placeholder="Type name to search..." oninput="filterItems()">
+            <select id="itemSelect" class="form-select mt-2" size="4" onchange="onItemSelect()"></select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Qty</label>
+            <input type="number" id="qtyInput" class="form-control" min="1" placeholder="0">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Unit</label>
+            <input type="text" id="unitInput" class="form-control" readonly placeholder="Auto">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Supplier</label>
+            <input type="text" id="supplierInput" class="form-control" readonly placeholder="Auto">
+          </div>
+        </div>
+        
+        <button class="btn btn-custom w-100 mb-4" onclick="addItemToCart()">+ Add Item to Current List</button>
+
+        <h5 class="mb-3" style="color: #495057;">Current Order Items:</h5>
+        <div class="table-container mb-4">
+          <table class="table table-hover table-striped">
+            <thead>
+              <tr><th>Item Name</th><th>Qty</th><th>Unit</th><th>Supplier</th></tr>
+            </thead>
+            <tbody id="cartBody">
+              <tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="row g-3 align-items-end pt-3 border-top">
+          <div class="col-md-4">
+            <label class="form-label text-danger">Enter Staff Verification Code</label>
+            <input type="password" id="staffCode" class="form-control text-center" placeholder="••••" style="letter-spacing: 5px; font-weight: bold;">
+          </div>
+          <div class="col-md-8">
+            <button class="btn btn-submit" id="submitBtn" onclick="submitFinalOrder()">🚀 Submit Final Order</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ORDER HISTORY -->
+    <div class="tab-pane fade" id="pills-history" role="tabpanel">
+      <div class="card">
+        <h4 class="mb-4" style="color: #1f4e78;">Live Order History (View Only)</h4>
+        <div class="table-container table-responsive">
+          <table class="table table-hover table-striped">
+            <thead>
+              <tr><th>Date</th><th>Item Name</th><th>Qty</th><th>Unit</th><th>Supplier</th><th>Status</th><th>Received Date</th><th>Submitted By</th></tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="8" class="text-center text-muted">Loading live logs...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // আপনার নতুন এবং ফ্রেশ গুগল অ্যাপস স্ক্রিপ্ট ওয়েব অ্যাপ ইউআরএল
+  const API_URL = "https://script.google.com/macros/s/AKfycbwspYy5J8fqs_Vk-3Cv5ADaubcWPBf9EVS4zS7uTmCVxHxCQ1ojfF7h-qCwhTjzHpq3ig/exec";
+  
+  let masterItems = [];
+  let staffCodes = {};
+  let cart = [];
+
+  window.onload = function() {
+    fetch(API_URL + "?action=getMaster")
+    .then(res => res.json())
+    .then(data => {
+      masterItems = data.items;
+      staffCodes = data.staff;
+      filterItems();
+    })
+    .catch(err => console.error("Error loading master data:", err));
+  };
+
+  function filterItems() {
+    let search = document.getElementById('itemSearch').value.toLowerCase();
+    let select = document.getElementById('itemSelect');
+    select.innerHTML = '';
+    masterItems.forEach(item => {
+      if(item.name.toLowerCase().includes(search)) {
+        let opt = document.createElement('option');
+        opt.value = item.name;
+        opt.text = item.name;
+        select.appendChild(opt);
+      }
+    });
+  }
+
+  function onItemSelect() {
+    let selectedName = document.getElementById('itemSelect').value;
+    let item = masterItems.find(i => i.name === selectedName);
+    if(item) {
+      document.getElementById('supplierInput').value = item.supplier;
+      document.getElementById('unitInput').value = item.unit;
+    }
+  }
+
+  function addItemToCart() {
+    let name = document.getElementById('itemSelect').value;
+    let supplier = document.getElementById('supplierInput').value;
+    let unit = document.getElementById('unitInput').value;
+    let qty = document.getElementById('qtyInput').value;
+
+    if(!name || !qty) { alert('Please select an Item and specify Quantity!'); return; }
+
+    if(cart.length === 0) document.getElementById('cartBody').innerHTML = '';
+
+    cart.push({name, supplier, unit, qty});
+    updateCartTable();
+    
+    // Clear fields
+    document.getElementById('qtyInput').value = '';
+    document.getElementById('itemSearch').value = '';
+    filterItems();
+    document.getElementById('supplierInput').value = '';
+    document.getElementById('unitInput').value = '';
+  }
+
+  function updateCartTable() {
+    let tbody = document.getElementById('cartBody');
+    tbody.innerHTML = '';
+    cart.forEach(item => {
+      tbody.innerHTML += `<tr><td class="text-start">${item.name}</td><td><strong>${item.qty}</strong></td><td>${item.unit}</td><td>${item.supplier}</td></tr>`;
+    });
+  }
+
+  function submitFinalOrder() {
+    let code = document.getElementById('staffCode').value;
+    let staffName = staffCodes[code];
+
+    if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
+    if(cart.length === 0) { alert('Your current order list is empty!'); return; }
+
+    document.getElementById('submitBtn').innerText = "Processing & Emailing...";
+    document.getElementById('submitBtn').disabled = true;
+
+    fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({ action: "submit", cart: cart, staffName: staffName })
+    })
+    .then(() => {
+      alert('Order request submitted successfully!');
+      cart = [];
+      document.getElementById('cartBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>';
+      document.getElementById('staffCode').value = '';
+      document.getElementById('submitBtn').innerText = "🚀 Submit Final Order";
+      document.getElementById('submitBtn').disabled = false;
+    })
+    .catch(err => {
+      alert("Submission error.");
+      document.getElementById('submitBtn').disabled = false;
+    });
+  }
+
+  function loadHistory() {
+    let tbody = document.getElementById('historyBody');
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Fetching records...</td></tr>';
+    
+    fetch(API_URL + "?action=getHistory")
+    .then(res => res.json())
+    .then(data => {
+      tbody.innerHTML = '';
+      if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No orders recorded yet.</td></tr>'; return; }
+      data.reverse().forEach(r => {
+        tbody.innerHTML += `<tr>
+          <td class="small text-muted">${r.date}</td>
+          <td class="text-start">${r.item}</td>
+          <td><strong>${r.qty}</strong></td>
+          <td>${r.unit}</td>
+          <td>${r.supplier}</td>
+          <td><span class="badge bg-warning text-dark">${r.status}</span></td>
+          <td><span>${r.receivedDate}</span></td>
+          <td><span class="badge bg-secondary">${r.by}</span></td>
+        </tr>`;
+      });
+    });
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
