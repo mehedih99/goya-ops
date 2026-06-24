@@ -155,8 +155,7 @@
       document.getElementById('unitInput').value = item.unit;
     }
   }
-
-  function addItemToCart() {
+function addItemToCart() {
     let name = document.getElementById('itemSelect').value;
     let supplier = document.getElementById('supplierInput').value;
     let unit = document.getElementById('unitInput').value;
@@ -164,9 +163,18 @@
 
     if(!name || !qty) { alert('Please select an Item and specify Quantity!'); return; }
 
-    if(cart.length === 0) document.getElementById('cartBody').innerHTML = '';
+    // চেক করা হচ্ছে আইটেমটি অলরেডি লিস্টে আছে কি না
+    let existingItem = cart.find(item => item.name === name);
 
-    cart.push({name, supplier, unit, qty});
+    if (existingItem) {
+      // যদি থাকে, তবে আগের Qty এর সাথে নতুন Qty যোগ হবে (Number এ কনভার্ট করে)
+      existingItem.qty = Number(existingItem.qty) + Number(qty);
+    } else {
+      // যদি না থাকে, তবে নতুন করে লিস্টে যোগ হবে
+      if(cart.length === 0) document.getElementById('cartBody').innerHTML = '';
+      cart.push({name, supplier, unit, qty: Number(qty)});
+    }
+
     updateCartTable();
     
     // Clear fields
@@ -176,15 +184,7 @@
     document.getElementById('supplierInput').value = '';
     document.getElementById('unitInput').value = '';
   }
-
-  function updateCartTable() {
-    let tbody = document.getElementById('cartBody');
-    tbody.innerHTML = '';
-    cart.forEach(item => {
-      tbody.innerHTML += `<tr><td class="text-start">${item.name}</td><td><strong>${item.qty}</strong></td><td>${item.unit}</td><td>${item.supplier}</td></tr>`;
-    });
-  }
-
+  
   function submitFinalOrder() {
     let code = document.getElementById('staffCode').value;
     let staffName = staffCodes[code];
