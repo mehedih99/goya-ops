@@ -24,9 +24,11 @@
     .table thead { background-color: #1f4e78; color: #ffffff; }
     .table th, .table td { vertical-align: middle; padding: 12px; text-align: center; }
     
-    /* সার্চ ড্রপডাউনকে পপআপ স্টাইল করার জন্য */
     .search-container { position: relative; }
     #itemSelect { position: absolute; z-index: 1000; width: 100%; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: white; max-height: 200px; overflow-y: auto; }
+    
+    /* ফিল্টার সেকশনের স্টাইল */
+    .filter-section { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -102,6 +104,27 @@
     <div class="tab-pane fade" id="pills-history" role="tabpanel">
       <div class="card">
         <h4 class="mb-4" style="color: #1f4e78;">Live Order History (View Only)</h4>
+        
+        <!-- নতুন ফিল্টার এবং সার্চ কন্ট্রোল সেকশন -->
+        <div class="filter-section">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small text-muted">🔍 Search Item Name</label>
+              <input type="text" id="historySearch" class="form-control" placeholder="Type item name..." oninput="applyHistoryFilters()">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small text-muted">📅 Filter by Date</label>
+              <input type="date" id="historyDateFilter" class="form-control" onchange="applyHistoryFilters()">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small text-muted">🏢 Filter by Supplier</label>
+              <select id="historySupplierFilter" class="form-select" onchange="applyHistoryFilters()">
+                <option value="">All Suppliers</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="table-container table-responsive">
           <table class="table table-hover table-striped">
             <thead>
@@ -123,6 +146,7 @@
   let masterItems = [];
   let staffCodes = {};
   let cart = [];
+  let rawHistoryData = []; // ফিল্টারিং এর জন্য অরিজিনাল হিস্টোরি ডেটা রাখার ভ্যারিয়েবল
 
   window.onload = function() {
     fetch(API_URL + "?action=getMaster")
@@ -131,6 +155,7 @@
       masterItems = data.items;
       staffCodes = data.staff;
       buildDropdownList();
+      populateSupplierFilter();
     })
     .catch(err => console.error("Error loading master data:", err));
   };
@@ -143,6 +168,20 @@
       opt.value = item.name;
       opt.text = item.name;
       select.appendChild(opt);
+    });
+  }
+
+  // হিস্টোরি ট্যাবের সাপ্লায়ার ড্রপডাউন ডাইনামিকালি লোড করার জন্য
+  function populateSupplierFilter() {
+    let supplierFilter = document.getElementById('historySupplierFilter');
+    let suppliers = [...new Set(masterItems.map(item => item.supplier))];
+    suppliers.sort().forEach(sup => {
+      if(sup) {
+        let opt = document.createElement('option');
+        opt.value = sup;
+        opt.text = sup;
+        supplierFilter.appendChild(opt);
+      }
     });
   }
 
@@ -180,7 +219,6 @@
     document.getElementById('itemSelect').style.display = 'none';
   }
 
-  // বাইরে ক্লিক করলে ড্রপডাউন বন্ধ হওয়ার জন্য লজিক
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.search-container')) {
       document.getElementById('itemSelect').style.display = 'none';
@@ -198,7 +236,6 @@
       return; 
     }
 
-    // চেক করা হচ্ছে আইটেমটি অলরেডি লিস্টে আছে কি না
     let existingItem = cart.find(item => item.name === name);
 
     if (existingItem) {
@@ -210,7 +247,6 @@
 
     updateCartTable();
     
-    // ক্লিয়ার ফিল্ডস
     document.getElementById('qtyInput').value = '';
     document.getElementById('itemSearch').value = '';
     document.getElementById('supplierInput').value = '';
@@ -255,28 +291,74 @@
     });
   }
 
+  // লাইভ হিস্টোরি ডেটা ফেচ করা
   function loadHistory() {
     let tbody = document.getElementById('historyBody');
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Fetching records...</td></tr>';
     
+    // ফিল্টার ফিল্ড রিসেট করা
+    document.getElementById('historySearch').value = '';
+    document.getElementById('historyDateFilter').value = '';
+    document.getElementById('historySupplierFilter').value = '';
+
     fetch(API_URL + "?action=getHistory")
     .then(res => res.json())
     .then(data => {
-      tbody.innerHTML = '';
-      if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No orders recorded yet.</td></tr>'; return; }
-      data.reverse().forEach(r => {
-        tbody.innerHTML += `<tr>
-          <td class="small text-muted">${r.date}</td>
-          <td class="text-start">${r.item}</td>
-          <td><strong>${r.qty}</strong></td>
-          <td>${r.unit}</td>
-          <td>${r.supplier}</td>
-          <td><span class="badge bg-warning text-dark">${r.status}</span></td>
-          <td><span>${r.receivedDate}</span></td>
-          <td><span class="badge bg-secondary">${r.by}</span></td>
-        </tr>`;
-      });
+      rawHistoryData = data ? data.reverse() : []; // রিসেন্ট ডেটা ওপরে রাখার জন্য reverse
+      renderHistoryTable(rawHistoryData);
     });
+  }
+
+  // টেবিল রেন্ডার করার কমন ফাংশন
+  function renderHistoryTable(dataList) {
+    let tbody = document.getElementById('historyBody');
+    tbody.innerHTML = '';
+    
+    if(!dataList || dataList.length === 0) { 
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No orders match the filters.</td></tr>'; 
+      return; 
+    }
+    
+    dataList.forEach(r => {
+      tbody.innerHTML += `<tr>
+        <td class="small text-muted">${r.date}</td>
+        <td class="text-start">${r.item}</td>
+        <td><strong>${r.qty}</strong></td>
+        <td>${r.unit}</td>
+        <td>${r.supplier}</td>
+        <td><span class="badge bg-warning text-dark">${r.status}</span></td>
+        <td><span>${r.receivedDate}</span></td>
+        <td><span class="badge bg-secondary">${r.by}</span></td>
+      </tr>`;
+    });
+  }
+
+  // ফিল্টার এবং সার্চ একসাথে অ্যাপ্লাই করার মাস্টার লজিক
+  function applyHistoryFilters() {
+    let searchText = document.getElementById('historySearch').value.toLowerCase();
+    let dateVal = document.getElementById('historyDateFilter').value; // ফরম্যাট: YYYY-MM-DD
+    let supplierVal = document.getElementById('historySupplierFilter').value;
+
+    let filtered = rawHistoryData.filter(r => {
+      // ১. সার্চ ম্যাচিং (Item Name)
+      let matchSearch = r.item.toLowerCase().includes(searchText);
+      
+      // ২. তারিখ ম্যাচিং (শিটের ডেটার শুরুতে YYYY-MM-DD ফরম্যাট থাকে)
+      let matchDate = true;
+      if (dateVal) {
+        matchDate = r.date.startsWith(dateVal);
+      }
+      
+      // ৩. সাপ্লায়ার ম্যাচিং
+      let matchSupplier = true;
+      if (supplierVal) {
+        matchSupplier = (r.supplier === supplierVal);
+      }
+
+      return matchSearch && matchDate && matchSupplier;
+    });
+
+    renderHistoryTable(filtered);
   }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
