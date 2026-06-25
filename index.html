@@ -68,7 +68,6 @@
         <h4 class="mb-4" style="color: #1f4e78;">Create Purchase Request</h4>
         
         <div class="row g-3 mb-4">
-          <!-- সার্চ এবং ড্রপডাউন কন্টেইনার -->
           <div class="col-md-5 search-container">
             <label class="form-label">Search Item</label>
             <input type="text" id="itemSearch" class="form-control" placeholder="Type name to search..." oninput="filterItems()" autocomplete="off">
@@ -114,12 +113,11 @@
       </div>
     </div>
 
-    <!-- TAB 2: ORDER HISTORY (ফিল্টার অপশন ও ক্যালেন্ডার সহ রিস্টোর করা) -->
+    <!-- TAB 2: ORDER HISTORY -->
     <div class="tab-pane fade" id="pills-history" role="tabpanel">
       <div class="card" style="padding: 20px;">
         <h4 class="mb-4" style="color: #1f4e78;">Live Order History (View Only)</h4>
         
-        <!-- ফিল্টারিং প্যানেল (রিস্টোর করা হলো) -->
         <div class="filter-card">
           <div class="row g-3">
             <div class="col-md-4">
@@ -139,7 +137,6 @@
           </div>
         </div>
 
-        <!-- হিস্ট্রি ডাটা টেবিল (মোবাইল স্লাইডার সহ) -->
         <div class="table-container">
           <table class="table table-hover table-striped" style="min-width: 850px;">
             <thead>
@@ -161,7 +158,7 @@
   let masterItems = [];
   let staffCodes = {};
   let cart = [];
-  let historyData = []; // ফিল্টার করার জন্য গ্লোবাল হিস্ট্রি ডাটা জমা রাখার ভেরিয়েবল
+  let historyData = [];
   let selectedItemName = "";
 
   window.onload = function() {
@@ -180,7 +177,6 @@
     });
   };
 
-  // পপ-আপ ড্রপডাউন ফিল্টারিং
   function filterItems() {
     let search = document.getElementById('itemSearch').value.toLowerCase();
     let list = document.getElementById('suggestions');
@@ -209,7 +205,6 @@
     }
   }
 
-  // ডাবল এন্ট্রি চেক করে কোয়ান্টিটি প্লাস করার লজিক
   function addItemToCart() {
     let name = selectedItemName || document.getElementById('itemSearch').value;
     let supplier = document.getElementById('supplierInput').value;
@@ -244,6 +239,39 @@
     });
   }
 
+  // আপনার চূড়ান্ত পছন্দের ফরম্যাটে হোয়াটসঅ্যাপ মেসেজ তৈরির লজিক
+  function redirectToWhatsApp(staffName) {
+    let now = new Date();
+    let timeStr = now.toLocaleString('en-US', { hour12: true });
+    
+    let msg = `📦 *New Purchase Order*\n`;
+    msg += `----------------------------------\n\n`;
+    
+    let groupedBySupplier = {};
+    cart.forEach(item => {
+      if (!groupedBySupplier[item.supplier]) {
+        groupedBySupplier[item.supplier] = [];
+      }
+      groupedBySupplier[item.supplier].push(item);
+    });
+    
+    for (let supplier in groupedBySupplier) {
+      msg += `*Supplier: ${supplier}*\n`;
+      groupedBySupplier[supplier].forEach(item => {
+        msg += `• ${item.name} - ${item.qty} ${item.unit}\n`;
+      });
+      msg += `\n`;
+    }
+    
+    msg += `----------------------------------\n`;
+    msg += `👤 *Submitted By:* ${staffName}\n`;
+    msg += `📅 *Date & Time:* ${timeStr}\n\n`;
+    msg += `🤖 _Generated via Goya Portal_`;
+    
+    let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(whatsappUrl, '_blank');
+  }
+
   function submitFinalOrder() {
     let code = document.getElementById('staffCode').value;
     let staffName = staffCodes[code];
@@ -260,7 +288,10 @@
       body: JSON.stringify({ action: "submit", cart: cart, staffName: staffName })
     })
     .then(() => {
-      alert('Order request submitted successfully!');
+      alert('Order request submitted successfully! Opening WhatsApp to share...');
+      
+      redirectToWhatsApp(staffName);
+      
       cart = [];
       document.getElementById('cartBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>';
       document.getElementById('staffCode').value = '';
@@ -273,7 +304,6 @@
     });
   }
 
-  // লাইভ অর্ডার হিস্ট্রি লোড এবং সাপ্লায়ার ড্রপডাউন তৈরি
   function loadHistory() {
     let tbody = document.getElementById('historyBody');
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Fetching records...</td></tr>';
@@ -282,9 +312,8 @@
     .then(res => res.json())
     .then(data => {
       if(!data) data = [];
-      historyData = data.reverse(); // গ্লোবাল ভেরিয়েবলে ডাটা সেভ রাখা হলো
+      historyData = data.reverse();
       
-      // ইউনিক সাপ্লায়ার লিস্ট তৈরি করে ফিল্টার ড্রপডাউনে বসানো
       let supplierSelect = document.getElementById('historySupplierFilter');
       supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
       let uniqueSuppliers = [...new Set(historyData.map(r => r.supplier).filter(Boolean))];
@@ -299,10 +328,9 @@
     });
   }
 
-  // ৩টি ইনপুটের উপর ভিত্তি করে লাইভ ফিল্টারিং প্রসেস
   function applyHistoryFilters() {
     let searchVal = document.getElementById('historySearch').value.toLowerCase();
-    let dateVal = document.getElementById('historyDate').value; // format: YYYY-MM-DD
+    let dateVal = document.getElementById('historyDate').value;
     let supplierVal = document.getElementById('historySupplierFilter').value;
 
     let filtered = historyData.filter(r => {
@@ -311,7 +339,6 @@
       let matchDate = true;
       
       if(dateVal) {
-        // গুগল শিটের ডেট ফরম্যাট থেকে (YYYY-MM-DD) ম্যাচ করা হচ্ছে
         matchDate = r.date.startsWith(dateVal);
       }
       
@@ -321,7 +348,6 @@
     renderHistoryTable(filtered);
   }
 
-  // হিস্ট্রি টেবিল রেন্ডার করা
   function renderHistoryTable(data) {
     let tbody = document.getElementById('historyBody');
     tbody.innerHTML = '';
