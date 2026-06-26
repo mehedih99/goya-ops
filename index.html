@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Goya Ordering Portal</title>
+  <title>Goya Portal</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <style>
     body { background-color: #f4f5f7; color: #333333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
     .main-container { max-width: 950px; margin: 30px auto; }
     .card { background-color: #ffffff; border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); padding: 30px; position: relative; }
     .portal-title { color: #1f4e78; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
-    .nav-pills .nav-link { color: #555; font-weight: 600; border-radius: 10px; padding: 10px 20px; margin-right: 10px; background-color: #e9ecef; }
+    .nav-pills .nav-link { color: #555; font-weight: 600; border-radius: 10px; padding: 10px 15px; margin: 5px; background-color: #e9ecef; }
     .nav-pills .nav-link.active { background-color: #1f4e78; color: #ffffff; }
     .form-label { font-weight: 600; color: #495057; }
     .form-control, .form-select { border-radius: 8px; border: 1px solid #ced4da; padding: 10px; background-color: #f8f9fa; }
@@ -19,8 +19,11 @@
     .btn-custom:hover { background-color: #153754; color: #fff; }
     .btn-submit { background-color: #28a745; color: white; width: 100%; font-size: 1.1rem; padding: 12px; border-radius: 8px; border: none; font-weight: 600; }
     .btn-submit:hover { background-color: #1e7e34; }
+    .btn-production { background-color: #0288d1; color: white; width: 100%; font-size: 1.1rem; padding: 12px; border-radius: 8px; border: none; font-weight: 600; }
+    .btn-production:hover { background-color: #01579b; }
+    .btn-wastage { background-color: #d32f2f; color: white; width: 100%; font-size: 1.1rem; padding: 12px; border-radius: 8px; border: none; font-weight: 600; }
+    .btn-wastage:hover { background-color: #b71c1c; }
     
-    /* কাস্টম পপ-আপ ড্রপডাউন লিস্টের স্টাইল */
     .search-container { position: relative; }
     .suggestions-list { 
       position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; 
@@ -31,7 +34,6 @@
     .suggestions-list li { padding: 10px 15px; list-style: none; cursor: pointer; border-bottom: 1px solid #f1f1f1; transition: 0.2s; text-align: left; }
     .suggestions-list li:hover { background-color: #f0f4f8; color: #1f4e78; font-weight: 600; }
     
-    /* মোবাইল রেসপন্সিভ টেবিল কন্টেইনার ও স্লাইডার */
     .table-container { 
       background: #fff; border-radius: 12px; overflow-x: auto; 
       -webkit-overflow-scrolling: touch; box-shadow: 0 2px 10px rgba(0,0,0,0.02); width: 100%; 
@@ -39,17 +41,15 @@
     .table { margin-bottom: 0; }
     .table thead { background-color: #1f4e78; color: #ffffff; }
     .table th, .table td { vertical-align: middle; padding: 12px; text-align: center; white-space: nowrap; }
-    
     .filter-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
   </style>
 </head>
 <body>
 
 <div class="container main-container">
-  <!-- ব্র্যান্ডিং হেডার এবং লোগো -->
   <h2 class="text-center mb-4 portal-title d-flex align-items-center justify-content-center gap-3 flex-wrap">
     <img src="logo.png" alt="Goya Logo" style="height: 180px; width: auto; max-width: 100%; object-fit: contain; margin: -20px 0;">
-    <span style="font-size: 2rem; font-weight: 700; vertical-align: middle;">Goya Ordering Portal</span>
+    <span style="font-size: 2rem; font-weight: 700; vertical-align: middle;">Goya Portal</span>
   </h2>
   
   <ul class="nav nav-pills mb-4 justify-content-center" id="pills-tab" role="tablist">
@@ -57,20 +57,24 @@
       <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pills-order" type="button">🛒 Send Order</button>
     </li>
     <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-production" type="button">🥣 Production Log</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-wastage" type="button">🗑️ Wastage Log</button>
+    </li>
+    <li class="nav-item">
       <button class="nav-link" data-bs-toggle="pill" data-bs-target="#pills-history" type="button" onclick="loadHistory()">📜 Order History</button>
     </li>
   </ul>
 
   <div class="tab-content" id="pills-tabContent">
-    <!-- TAB 1: SEND ORDER -->
     <div class="tab-pane fade show active" id="pills-order" role="tabpanel">
       <div class="card">
         <h4 class="mb-4" style="color: #1f4e78;">Create Purchase Request</h4>
-        
         <div class="row g-3 mb-4">
           <div class="col-md-5 search-container">
             <label class="form-label">Search Item</label>
-            <input type="text" id="itemSearch" class="form-control" placeholder="Type name to search..." oninput="filterItems()" autocomplete="off">
+            <input type="text" id="itemSearch" class="form-control" placeholder="Type name to search supplier items..." oninput="filterItems('order', 'itemSearch', 'suggestions', 'supplierInput', 'unitInput')" autocomplete="off">
             <ul id="suggestions" class="suggestions-list"></ul>
           </div>
           <div class="col-md-2">
@@ -79,14 +83,13 @@
           </div>
           <div class="col-md-2">
             <label class="form-label">Unit</label>
-            <input type="text" id="unitInput" class="form-control" readonly placeholder="Auto">
+            <select id="unitInput" class="form-select"></select>
           </div>
           <div class="col-md-3">
             <label class="form-label">Supplier</label>
             <input type="text" id="supplierInput" class="form-control" readonly placeholder="Auto">
           </div>
         </div>
-        
         <button class="btn btn-custom w-100 mb-4" onclick="addItemToCart()">+ Add Item to Current List</button>
 
         <h5 class="mb-3" style="color: #495057;">Current Order Items:</h5>
@@ -113,11 +116,83 @@
       </div>
     </div>
 
-    <!-- TAB 2: ORDER HISTORY -->
+    <div class="tab-pane fade" id="pills-production" role="tabpanel">
+      <div class="card">
+        <h4 class="mb-4" style="color: #0288d1;">🥣 Internal Production / Batch Prep</h4>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6 search-container">
+            <label class="form-label">Search Batch/Prep Item</label>
+            <input type="text" id="prodSearch" class="form-control" placeholder="Type to search internal prep items..." oninput="filterItems('production', 'prodSearch', 'prodSuggestions', null, 'prodUnit')" autocomplete="off">
+            <ul id="prodSuggestions" class="suggestions-list"></ul>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Quantity Produced</label>
+            <input type="number" id="prodQty" class="form-control" min="1" placeholder="0">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Unit</label>
+            <select id="prodUnit" class="form-select">
+              <option value="">-- Choose Item First --</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-3 align-items-end pt-3 border-top">
+          <div class="col-md-4">
+            <label class="form-label text-danger">Enter Staff Verification Code</label>
+            <input type="password" id="prodStaffCode" class="form-control text-center" placeholder="••••" style="letter-spacing: 5px; font-weight: bold;">
+          </div>
+          <div class="col-md-8">
+            <button class="btn btn-production" id="prodSubmitBtn" onclick="submitProduction()">🥣 Submit Production Entry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="pills-wastage" role="tabpanel">
+      <div class="card">
+        <h4 class="mb-4" style="color: #d32f2f;">🗑️ Waste & Spillage Logger</h4>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4 search-container">
+            <label class="form-label">Search Waste Item (All Items)</label>
+            <input type="text" id="wasteSearch" class="form-control" placeholder="Search any item..." oninput="filterItems('wastage', 'wasteSearch', 'wasteSuggestions', null, 'wasteUnit')" autocomplete="off">
+            <ul id="wasteSuggestions" class="suggestions-list"></ul>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Qty Wasted</label>
+            <input type="number" id="wasteQty" class="form-control" min="0.01" step="0.01" placeholder="0">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Unit</label>
+            <select id="wasteUnit" class="form-select">
+              <option value="">-- Choose First --</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Reason for Waste</label>
+            <select id="wasteReason" class="form-select">
+              <option value="">-- Select Reason --</option>
+              <option value="Expired">Expired</option>
+              <option value="Spillage / Damaged">Spillage / Damaged</option>
+              <option value="Over-prepared">Over-prepared</option>
+              <option value="Staff Mistake">Staff Mistake</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-3 align-items-end pt-3 border-top">
+          <div class="col-md-4">
+            <label class="form-label text-danger">Enter Staff Verification Code</label>
+            <input type="password" id="wasteStaffCode" class="form-control text-center" placeholder="••••" style="letter-spacing: 5px; font-weight: bold;">
+          </div>
+          <div class="col-md-8">
+            <button class="btn btn-wastage" id="wasteSubmitBtn" onclick="submitWastage()">🗑️ Submit Wastage Entry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="tab-pane fade" id="pills-history" role="tabpanel">
       <div class="card" style="padding: 20px;">
         <h4 class="mb-4" style="color: #1f4e78;">Live Order History (View Only)</h4>
-        
         <div class="filter-card">
           <div class="row g-3">
             <div class="col-md-4">
@@ -136,7 +211,6 @@
             </div>
           </div>
         </div>
-
         <div class="table-container">
           <table class="table table-hover table-striped" style="min-width: 850px;">
             <thead>
@@ -153,13 +227,14 @@
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbwspYy5J8fqs_Vk-3Cv5ADaubcWPBf9EVS4zS7uTmCVxHxCQ1ojfF7h-qCwhTjzHpq3ig/exec";
+  // 🔗 আপনার সরবরাহকৃত ফাইনাল গুগল অ্যাপস স্ক্রিপ্ট ইউআরএল এখানে যুক্ত করা হয়েছে
+  const API_URL = "https://script.google.com/macros/s/AKfycbxg1ytN_HYj-p7-f0e81RH3dr9k5MHCQ6l08x1BP6kHrhRG46FlPCyuexeKaCLkitDJwA/exec";
   
   let masterItems = [];
   let staffCodes = {};
   let cart = [];
   let historyData = [];
-  let selectedItemName = "";
+  let activeSelections = { order: null, production: null, wastage: null };
 
   window.onload = function() {
     fetch(API_URL + "?action=getMaster")
@@ -168,23 +243,30 @@
       masterItems = data.items;
       staffCodes = data.staff;
     })
-    .catch(err => console.error("Error loading data:", err));
+    .catch(err => console.error("Error loading master data:", err));
     
     document.addEventListener("click", function(e) {
       if (!e.target.closest('.search-container')) {
         document.getElementById("suggestions").style.display = "none";
+        document.getElementById("prodSuggestions").style.display = "none";
+        document.getElementById("wasteSuggestions").style.display = "none";
       }
     });
   };
 
-  function filterItems() {
-    let search = document.getElementById('itemSearch').value.toLowerCase();
-    let list = document.getElementById('suggestions');
+  function filterItems(mode, inputId, listId, supplierId, unitId) {
+    let search = document.getElementById(inputId).value.toLowerCase();
+    let list = document.getElementById(listId);
     list.innerHTML = '';
     
     if(!search) { list.style.display = "none"; return; }
     
-    let filtered = masterItems.filter(item => item.name.toLowerCase().includes(search));
+    let filtered = masterItems.filter(item => {
+      let match = item.name.toLowerCase().includes(search);
+      if (mode === "order") return match && item.supplier.toLowerCase() !== "internal";
+      if (mode === "production") return match && item.supplier.toLowerCase() === "internal";
+      return match;
+    });
     
     if(filtered.length > 0) {
       list.style.display = "block";
@@ -192,10 +274,13 @@
         let li = document.createElement('li');
         li.innerText = item.name;
         li.onclick = function() {
-          document.getElementById('itemSearch').value = item.name;
-          selectedItemName = item.name;
-          document.getElementById('supplierInput').value = item.supplier;
-          document.getElementById('unitInput').value = item.unit;
+          document.getElementById(inputId).value = item.name;
+          activeSelections[mode] = item;
+          if(supplierId) document.getElementById(supplierId).value = item.supplier;
+          
+          if(unitId) {
+            populateDynamicUnits(unitId, item.unit);
+          }
           list.style.display = "none";
         };
         list.appendChild(li);
@@ -205,30 +290,44 @@
     }
   }
 
+  function populateDynamicUnits(selectId, unitString) {
+    let selectEl = document.getElementById(selectId);
+    selectEl.innerHTML = '';
+    
+    let units = ["PCS"]; // Default Fallback
+    if(unitString) {
+      units = unitString.split(',').map(u => u.trim()).filter(Boolean);
+    }
+    
+    units.forEach(u => {
+      let opt = document.createElement('option');
+      opt.value = u;
+      opt.text = u;
+      selectEl.appendChild(opt);
+    });
+    selectEl.selectedIndex = 0;
+  }
+
   function addItemToCart() {
-    let name = selectedItemName || document.getElementById('itemSearch').value;
-    let supplier = document.getElementById('supplierInput').value;
-    let unit = document.getElementById('unitInput').value;
+    let itemObj = activeSelections['order'];
     let qty = document.getElementById('qtyInput').value;
+    let selectedUnit = document.getElementById('unitInput').value;
+    if(!itemObj || !qty || !selectedUnit) { alert('Please select a valid item and enter Quantity!'); return; }
 
-    if(!name || !qty || !supplier) { alert('Please select a valid Item from the dropdown list and enter Quantity!'); return; }
-
-    let existingItem = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
-
+    let existingItem = cart.find(i => i.name.toLowerCase() === itemObj.name.toLowerCase() && i.unit === selectedUnit);
     if (existingItem) {
       existingItem.qty = Number(existingItem.qty) + Number(qty);
     } else {
       if(cart.length === 0) document.getElementById('cartBody').innerHTML = '';
-      cart.push({name, supplier, unit, qty: Number(qty)});
+      cart.push({ name: itemObj.name, supplier: itemObj.supplier, unit: selectedUnit, qty: Number(qty) });
     }
 
     updateCartTable();
-    
     document.getElementById('qtyInput').value = '';
     document.getElementById('itemSearch').value = '';
     document.getElementById('supplierInput').value = '';
-    document.getElementById('unitInput').value = '';
-    selectedItemName = "";
+    document.getElementById('unitInput').innerHTML = '';
+    activeSelections['order'] = null;
   }
 
   function updateCartTable() {
@@ -239,91 +338,116 @@
     });
   }
 
-  // আপনার চূড়ান্ত পছন্দের ফরম্যাটে হোয়াটসঅ্যাপ মেসেজ তৈরির লজিক
-  function redirectToWhatsApp(staffName) {
-    let now = new Date();
-    let timeStr = now.toLocaleString('en-US', { hour12: true });
-    
-    let msg = `📦 *New Purchase Order*\n`;
-    msg += `----------------------------------\n\n`;
-    
-    let groupedBySupplier = {};
-    cart.forEach(item => {
-      if (!groupedBySupplier[item.supplier]) {
-        groupedBySupplier[item.supplier] = [];
-      }
-      groupedBySupplier[item.supplier].push(item);
-    });
-    
-    for (let supplier in groupedBySupplier) {
-      msg += `*Supplier: ${supplier}*\n`;
-      groupedBySupplier[supplier].forEach(item => {
-        msg += `• ${item.name} - ${item.qty} ${item.unit}\n`;
-      });
-      msg += `\n`;
-    }
-    
-    msg += `----------------------------------\n`;
-    msg += `👤 *Submitted By:* ${staffName}\n`;
-    msg += `📅 *Date & Time:* ${timeStr}\n\n`;
-    msg += `🤖 _Generated via Goya Portal_`;
-    
-    let whatsappUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(whatsappUrl, '_blank');
-  }
-
   function submitFinalOrder() {
-    let code = document.getElementById('staffCode').value;
+    let code = document.getElementById('staffCode').value.toString().trim();
     let staffName = staffCodes[code];
-
     if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
     if(cart.length === 0) { alert('Your current order list is empty!'); return; }
 
-    document.getElementById('submitBtn').innerText = "Processing & Emailing...";
+    document.getElementById('submitBtn').innerText = "Processing & Saving...";
     document.getElementById('submitBtn').disabled = true;
 
     fetch(API_URL, {
       method: "POST",
-      mode: "no-cors",
       body: JSON.stringify({ action: "submit", cart: cart, staffName: staffName })
     })
     .then(() => {
-      alert('Order request submitted successfully! Opening WhatsApp to share...');
+      alert('Order request submitted successfully! Redirecting to WhatsApp group...');
       
-      redirectToWhatsApp(staffName);
+      let now = new Date();
+      let timeStr = now.toLocaleString('en-US', { hour12: true });
+      let msg = `📦 *New Purchase Order*\n----------------------------------\n\n`;
+      
+      let grouped = {};
+      cart.forEach(i => { if(!grouped[i.supplier]) grouped[i.supplier] = []; grouped[i.supplier].push(i); });
+      for (let s in grouped) {
+        msg += `*Supplier: ${s}*\n`;
+        grouped[s].forEach(i => { msg += `• ${i.name} - ${i.qty} ${i.unit}\n`; });
+        msg += `\n`;
+      }
+      msg += `----------------------------------\n👤 *Submitted By:* ${staffName}\n📅 *Date & Time:* ${timeStr}\n\n🤖 _Generated via Goya Portal_`;
+      
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
       
       cart = [];
       document.getElementById('cartBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>';
       document.getElementById('staffCode').value = '';
       document.getElementById('submitBtn').innerText = "🚀 Submit Final Order";
       document.getElementById('submitBtn').disabled = false;
+    }).catch(() => { alert("Submission error."); document.getElementById('submitBtn').disabled = false; });
+  }
+
+  function submitProduction() {
+    let itemObj = activeSelections['production'];
+    let qty = document.getElementById('prodQty').value;
+    let selectedUnit = document.getElementById('prodUnit').value;
+    let code = document.getElementById('prodStaffCode').value.toString().trim();
+    let staffName = staffCodes[code];
+
+    if(!itemObj || !qty || !selectedUnit) { alert('Please select a production item and enter Quantity!'); return; }
+    if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
+
+    document.getElementById('prodSubmitBtn').innerText = "Logging Batch...";
+    document.getElementById('prodSubmitBtn').disabled = true;
+
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "production", item: itemObj.name, qty: qty, unit: selectedUnit, staffName: staffName })
     })
-    .catch(err => {
-      alert("Submission error.");
-      document.getElementById('submitBtn').disabled = false;
-    });
+    .then(() => {
+      alert('Production item logged successfully! Email notification has been sent.');
+      document.getElementById('prodSearch').value = '';
+      document.getElementById('prodQty').value = '';
+      document.getElementById('prodUnit').innerHTML = '<option value="">-- Choose Item First --</option>';
+      document.getElementById('prodStaffCode').value = '';
+      activeSelections['production'] = null;
+      document.getElementById('prodSubmitBtn').innerText = "🥣 Submit Production Entry";
+      document.getElementById('prodSubmitBtn').disabled = false;
+    }).catch(() => { alert("Error."); document.getElementById('prodSubmitBtn').disabled = false; });
+  }
+
+  function submitWastage() {
+    let itemObj = activeSelections['wastage'];
+    let qty = document.getElementById('wasteQty').value;
+    let selectedUnit = document.getElementById('wasteUnit').value;
+    let reason = document.getElementById('wasteReason').value;
+    let code = document.getElementById('wasteStaffCode').value.toString().trim();
+    let staffName = staffCodes[code];
+
+    if(!itemObj || !qty || !selectedUnit || !reason) { alert('Please complete all waste form fields!'); return; }
+    if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
+
+    document.getElementById('wasteSubmitBtn').innerText = "Logging Wastage...";
+    document.getElementById('wasteSubmitBtn').disabled = true;
+
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "wastage", item: itemObj.name, qty: qty, unit: selectedUnit, reason: reason, staffName: staffName })
+    })
+    .then(() => {
+      alert('Wastage logged successfully! Email report has been sent to manager.');
+      document.getElementById('wasteSearch').value = '';
+      document.getElementById('wasteQty').value = '';
+      document.getElementById('wasteUnit').innerHTML = '<option value="">-- Choose First --</option>';
+      document.getElementById('wasteReason').value = '';
+      document.getElementById('wasteStaffCode').value = '';
+      activeSelections['wastage'] = null;
+      document.getElementById('wasteSubmitBtn').innerText = "🗑️ Submit Wastage Entry";
+      document.getElementById('wasteSubmitBtn').disabled = false;
+    }).catch(() => { alert("Error."); document.getElementById('wasteSubmitBtn').disabled = false; });
   }
 
   function loadHistory() {
     let tbody = document.getElementById('historyBody');
     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Fetching records...</td></tr>';
-    
-    fetch(API_URL + "?action=getHistory")
-    .then(res => res.json())
-    .then(data => {
-      if(!data) data = [];
-      historyData = data.reverse();
-      
+    fetch(API_URL + "?action=getHistory").then(res => res.json()).then(data => {
+      historyData = (data || []).reverse();
       let supplierSelect = document.getElementById('historySupplierFilter');
       supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
       let uniqueSuppliers = [...new Set(historyData.map(r => r.supplier).filter(Boolean))];
       uniqueSuppliers.forEach(sup => {
-        let opt = document.createElement('option');
-        opt.value = sup;
-        opt.text = sup;
-        supplierSelect.appendChild(opt);
+        let opt = document.createElement('option'); opt.value = sup; opt.text = sup; supplierSelect.appendChild(opt);
       });
-      
       renderHistoryTable(historyData);
     });
   }
@@ -332,42 +456,20 @@
     let searchVal = document.getElementById('historySearch').value.toLowerCase();
     let dateVal = document.getElementById('historyDate').value;
     let supplierVal = document.getElementById('historySupplierFilter').value;
-
     let filtered = historyData.filter(r => {
       let matchSearch = r.item.toLowerCase().includes(searchVal);
       let matchSupplier = supplierVal ? r.supplier === supplierVal : true;
-      let matchDate = true;
-      
-      if(dateVal) {
-        matchDate = r.date.startsWith(dateVal);
-      }
-      
+      let matchDate = dateVal ? r.date.startsWith(dateVal) : true;
       return matchSearch && matchSupplier && matchDate;
     });
-
     renderHistoryTable(filtered);
   }
 
   function renderHistoryTable(data) {
-    let tbody = document.getElementById('historyBody');
-    tbody.innerHTML = '';
-    
-    if(data.length === 0) { 
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No matching records found.</td></tr>'; 
-      return; 
-    }
-    
+    let tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
+    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No matching records found.</td></tr>'; return; }
     data.forEach(r => {
-      tbody.innerHTML += `<tr>
-        <td class="small text-muted">${r.date}</td>
-        <td class="text-start">${r.item}</td>
-        <td><strong>${r.qty}</strong></td>
-        <td>${r.unit}</td>
-        <td>${r.supplier}</td>
-        <td><span class="badge bg-warning text-dark">${r.status}</span></td>
-        <td><span>${r.receivedDate || ''}</span></td>
-        <td><span class="badge bg-secondary">${r.by}</span></td>
-      </tr>`;
+      tbody.innerHTML += `<tr><td class="small text-muted">${r.date}</td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td>${r.supplier}</td><td><span class="badge bg-warning text-dark">${r.status}</span></td><td><span>${r.receivedDate || ''}</span></td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
     });
   }
 </script>
