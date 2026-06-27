@@ -6,16 +6,22 @@
   <title>Goya Portal</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <style>
-    /* 📱 মোবাইল স্ক্রিন কমপ্যাক্ট এবং ছোট ফন্ট সাইজ ইউআই অপ্টিমাইজেশন */
     body { background-color: #f4f5f7; color: #333333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; font-size: 0.9rem; }
-    .main-container { max-width: 950px; margin: 5px auto; }
+    .main-container { max-width: 950px; margin: 0 auto; }
     .card { background-color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); padding: 15px; margin-bottom: 10px; }
-    .portal-title { color: #1f4e78; font-weight: 700; text-transform: uppercase; margin-bottom: 5px !important; font-size: 1.4rem; }
-    .logo-container { text-center: center; margin: 0 auto; display: block; max-width: 140px; height: auto; }
+    .portal-title { color: #1f4e78; font-weight: 700; text-transform: uppercase; margin-top: -15px !important; margin-bottom: 10px !important; font-size: 1.3rem; text-align: center; }
+    
+    /* 📐 স্কয়ার লোগোর চারপাশের বাড়তি খালি জায়গা কাটার জন্য অপ্টিমাইজড ক্রপ সিএসএস */
+    .logo-container { 
+      display: block; 
+      margin: -25px auto -20px auto !important; 
+      max-width: 130px; 
+      height: 110px; 
+      object-fit: cover; 
+    }
     
     .nav-pills .nav-link { color: #555; font-weight: 600; border-radius: 8px; padding: 6px 12px; margin: 2px; background-color: #e9ecef; font-size: 0.85rem; }
     .nav-pills .nav-link.active { background-color: #1f4e78; color: #ffffff; }
-    
     .form-label { font-weight: 600; color: #495057; margin-bottom: 2px; font-size: 0.85rem; }
     .form-control, .form-select { border-radius: 6px; border: 1px solid #ced4da; padding: 6px 10px; background-color: #f8f9fa; font-size: 0.85rem; }
     
@@ -42,8 +48,9 @@
     @media (max-width: 576px) {
       body { padding: 5px; }
       .card { padding: 12px; }
-      .portal-title { font-size: 1.2rem; }
+      .portal-title { font-size: 1.15rem; }
       .nav-pills .nav-link { padding: 5px 8px; font-size: 0.78rem; }
+      .logo-container { max-width: 115px; height: 100px; margin: -20px auto -15px auto !important; }
     }
   </style>
 </head>
@@ -51,7 +58,7 @@
 
 <div class="container main-container text-center">
   <img src="logo.png" alt="Goya Logo" class="logo-container">
-  <h2 class="portal-title mt-1">Goya Portal</h2>
+  <h2 class="portal-title">Goya Portal</h2>
   
   <ul class="nav nav-pills mb-3 justify-content-center" id="pills-tab" role="tablist">
     <li class="nav-item">
@@ -69,6 +76,7 @@
   </ul>
 
   <div class="tab-content text-start" id="pills-tabContent">
+    <!-- TAB 1: SEND ORDER -->
     <div class="tab-pane fade show active" id="pills-order" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-primary">Create Purchase Request</h5>
@@ -117,6 +125,7 @@
       </div>
     </div>
 
+    <!-- TAB 2: PRODUCTION LOG -->
     <div class="tab-pane fade" id="pills-production" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-info">🥣 Internal Production / Batch Prep</h5>
@@ -161,6 +170,7 @@
       </div>
     </div>
 
+    <!-- TAB 3: WASTAGE LOG -->
     <div class="tab-pane fade" id="pills-wastage" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-danger">🗑️ Waste & Spillage Logger</h5>
@@ -215,6 +225,7 @@
       </div>
     </div>
 
+    <!-- TAB 4: ORDER HISTORY -->
     <div class="tab-pane fade" id="pills-history" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-primary">Live Order History</h5>
@@ -249,8 +260,7 @@
 </div>
 
 <script>
-  // 🔗 আপনার সরবরাহকৃত নতুন ফাইনাল গুগল অ্যাপস স্ক্রিপ্ট ইউআরএল
-  const API_URL = "https://script.google.com/macros/s/AKfycbzsDVFR8B_gIwnQJBT33DCsqIkGcBtgLqEntR88BgRNO4WYIr8u4snnP0c7pwWCHcczcw/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbxg1ytN_HYj-p7-f0e81RH3dr9k5MHCQ6l08x1BP6kHrhRG46FlPCvuexeKaCLkitDJwA/exec";
   
   let masterItems = [];
   let staffCodes = {};
@@ -360,12 +370,11 @@
     if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
     if(cart.length === 0) { alert('Your current order list is empty!'); return; }
 
-    document.getElementById('submitBtn').innerText = "Processing...";
     document.getElementById('submitBtn').disabled = true;
 
     fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "submit", cart: cart, staffName: staffName }) })
     .then(res => res.json())
-    .then(resData => {
+    .then(() => {
       alert('Order request submitted successfully! Opening WhatsApp...');
       let now = new Date();
       let timeStr = now.toLocaleString('en-US', { hour12: true });
@@ -383,7 +392,6 @@
       cart = [];
       document.getElementById('cartBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>';
       document.getElementById('staffCode').value = '';
-      document.getElementById('submitBtn').innerText = "🚀 Submit Final Order";
       document.getElementById('submitBtn').disabled = false;
     }).catch(() => { alert("Submission error."); document.getElementById('submitBtn').disabled = false; });
   }
@@ -454,6 +462,7 @@
     });
   }
 
+  // ট্যাব অ্যাক্টিভেশন ম্যানেজমেন্ট অটোমেটিক ফার্স্ট লোড
   function loadWasteHistory() {
     let tbody = document.getElementById('wasteHistoryBody');
     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Updating...</td></tr>';
