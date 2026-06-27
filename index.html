@@ -9,13 +9,12 @@
     body { background-color: #f4f5f7; color: #333333; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; font-size: 0.9rem; }
     .main-container { max-width: 950px; margin: 0 auto; }
     .card { background-color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04); padding: 15px; margin-bottom: 10px; }
-    .portal-title { color: #1f4e78; font-weight: 700; text-transform: uppercase; margin-top: -15px !important; margin-bottom: 10px !important; font-size: 1.3rem; text-align: center; }
+    .portal-title { color: #1f4e78; font-weight: 700; text-transform: uppercase; margin-top: -10px !important; margin-bottom: 15px !important; font-size: 1.35rem; text-align: center; letter-spacing: 0.5px; }
     
-    /* 📐 স্কয়ার লোগোর চারপাশের বাড়তি খালি জায়গা কাটার জন্য অপ্টিমাইজড ক্রপ সিএসএস */
     .logo-container { 
       display: block; 
-      margin: -25px auto -20px auto !important; 
-      max-width: 160px; 
+      margin: -20px auto -15px auto !important; 
+      max-width: 170px; 
       height: 140px; 
       object-fit: cover; 
     }
@@ -23,7 +22,9 @@
     .nav-pills .nav-link { color: #555; font-weight: 600; border-radius: 8px; padding: 6px 12px; margin: 2px; background-color: #e9ecef; font-size: 0.85rem; }
     .nav-pills .nav-link.active { background-color: #1f4e78; color: #ffffff; }
     .form-label { font-weight: 600; color: #495057; margin-bottom: 2px; font-size: 0.85rem; }
-    .form-control, .form-select { border-radius: 6px; border: 1px solid #ced4da; padding: 6px 10px; background-color: #f8f9fa; font-size: 0.85rem; }
+    .form-control, .form-select { border-radius: 6px; border: 1px solid #ced4da; padding: 6px 10px; background-color: #f8f9fa; font-size: 0.85rem; color: #333333; }
+    
+    input[type="date"] { min-height: 35px; background-color: #f8f9fa !important; color: #333333 !important; }
     
     .btn-custom { background-color: #1f4e78; color: #fff; border-radius: 6px; padding: 8px; font-weight: 600; border: none; font-size: 0.85rem; }
     .btn-submit { background-color: #28a745; color: white; width: 100%; padding: 10px; border-radius: 6px; border: none; font-weight: 600; font-size: 1rem; }
@@ -48,9 +49,9 @@
     @media (max-width: 576px) {
       body { padding: 5px; }
       .card { padding: 12px; }
-      .portal-title { font-size: 1.15rem; }
+      .portal-title { font-size: 1.25rem; }
       .nav-pills .nav-link { padding: 5px 8px; font-size: 0.78rem; }
-      .logo-container { max-width: 115px; height: 100px; margin: -20px auto -15px auto !important; }
+      .logo-container { max-width: 155px; height: 125px; margin: -15px auto -10px auto !important; }
     }
   </style>
 </head>
@@ -156,7 +157,8 @@
           </div>
         </div>
 
-        <h6 class="text-secondary mt-2">📋 Current Month Production History (1st - End)</h6>
+        <!-- 📅 ডায়নামিক হেডিং আইডি সহ প্রোডাকশন টেবিল -->
+        <h6 class="text-secondary mt-2" id="prodHeadingText">📋 Current Month Production History</h6>
         <div class="table-container">
           <table class="table table-striped table-hover">
             <thead>
@@ -211,7 +213,8 @@
           </div>
         </div>
 
-        <h6 class="text-secondary mt-2">📋 Current Month Wastage History (1st - End)</h6>
+        <!-- 📅 ডায়নামিক হেডিং আইডি সহ ওয়েস্টেজ টেবিল -->
+        <h6 class="text-secondary mt-2" id="wasteHeadingText">📋 Current Month Wastage History</h6>
         <div class="table-container">
           <table class="table table-striped table-hover">
             <thead>
@@ -269,6 +272,7 @@
   let activeSelections = { order: null, production: null, wastage: null };
 
   window.onload = function() {
+    updateDynamicHeadings();
     fetch(API_URL + "?action=getMaster")
     .then(res => res.json())
     .then(data => {
@@ -285,6 +289,20 @@
       }
     });
   };
+
+  // 📅 অটোমেটিক কারেন্ট মাসের নাম এবং ১ থেকে শেষ তারিখ জেনারেট করার জাভাস্ক্রিপ্ট ফাংশন
+  function updateDynamicHeadings() {
+    const monthNames = ["June", "June", "June", "June", "June", "June", "June", "June", "June", "June", "June", "June"]; 
+    const now = new Date();
+    const currentMonthName = now.toLocaleString('en-US', { month: 'long' });
+    const year = now.getFullYear();
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+    
+    const headingString = `📋 ${currentMonthName} History (${currentMonthName} 01st - ${currentMonthName} ${lastDay}th)`;
+    
+    document.getElementById("prodHeadingText").innerText = "📋 " + currentMonthName + " Production History (" + currentMonthName + " 01st - " + currentMonthName + " " + lastDay + "th)";
+    document.getElementById("wasteHeadingText").innerText = "📋 " + currentMonthName + " Wastage History (" + currentMonthName + " 01st - " + currentMonthName + " " + lastDay + "th)";
+  }
 
   function filterItems(mode, inputId, listId, supplierId, unitId) {
     let search = document.getElementById(inputId).value.toLowerCase();
@@ -375,18 +393,20 @@
     fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "submit", cart: cart, staffName: staffName }) })
     .then(res => res.json())
     .then(() => {
-      alert('Order request submitted successfully! Opening WhatsApp...');
+      alert('Order submitted successfully! Manager email notification sent. Opening WhatsApp...');
       let now = new Date();
       let timeStr = now.toLocaleString('en-US', { hour12: true });
-      let msg = `📦 *New Purchase Order*\n----------------------------------\n\n`;
+      
+      // 🌟 এনকোডিং সেফ টেক্সট-ইমোজি ফরম্যাট যাতে কোনো ডিভাইসেই মেসেজ না ভেঙে যায়
+      let msg = `=== NEW PURCHASE ORDER ===\n----------------------------------\n\n`;
       let grouped = {};
       cart.forEach(i => { if(!grouped[i.supplier]) grouped[i.supplier] = []; grouped[i.supplier].push(i); });
       for (let s in grouped) {
-        msg += `*Supplier: ${s}*\n`;
-        grouped[s].forEach(i => { msg += `• ${i.name} - ${i.qty} ${i.unit}\n`; });
+        msg += `Supplier: ${s}\n`;
+        grouped[s].forEach(i => { msg += ` - ${i.name}: ${i.qty} ${i.unit}\n`; });
         msg += `\n`;
       }
-      msg += `----------------------------------\n👤 *Submitted By:* ${staffName}\n📅 *Date & Time:* ${timeStr}\n\n🤖 _Generated via Goya Portal_`;
+      msg += `----------------------------------\nSubmitted By: ${staffName}\nDate & Time: ${timeStr}\n\nGenerated via Goya Portal`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
       
       cart = [];
@@ -457,12 +477,11 @@
       tbody.innerHTML = '';
       if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No records for this month.</td></tr>'; return; }
       data.reverse().forEach(r => {
-        tbody.innerHTML += `<tr><td>${r.date}</td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
+        tbody.innerHTML += `<tr><td><strong>${r.date}</strong></td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
       });
     });
   }
 
-  // ট্যাব অ্যাক্টিভেশন ম্যানেজমেন্ট অটোমেটিক ফার্স্ট লোড
   function loadWasteHistory() {
     let tbody = document.getElementById('wasteHistoryBody');
     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Updating...</td></tr>';
@@ -470,7 +489,7 @@
       tbody.innerHTML = '';
       if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records for this month.</td></tr>'; return; }
       data.reverse().forEach(r => {
-        tbody.innerHTML += `<tr><td>${r.date}</td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td><span class="text-danger font-weight-bold">${r.reason}</span></td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
+        tbody.innerHTML += `<tr><td><strong>${r.date}</strong></td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td><span class="text-danger font-weight-bold">${r.reason}</span></td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
       });
     });
   }
@@ -497,7 +516,7 @@
     let filtered = historyData.filter(r => {
       let matchSearch = r.item.toLowerCase().includes(searchVal);
       let matchSupplier = supplierVal ? r.supplier === supplierVal : true;
-      let matchDate = dateVal ? r.date.startsWith(dateVal) : true;
+      let matchDate = dateVal ? r.rawDate === dateVal : true;
       return matchSearch && matchSupplier && matchDate;
     });
     renderHistoryTable(filtered);
