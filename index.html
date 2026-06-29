@@ -280,7 +280,7 @@
               <input type="text" id="historySearch" class="form-control p-1" placeholder="Search item..." oninput="applyHistoryFilters()">
             </div>
             <div class="col-md-3 col-6">
-              <input type="date" id="historyDate" class="form-control p-1" onchange="applyHistoryFilters()">
+              <input type="text" id="historyDate" class="form-control" placeholder="📅 Filter by Date" onfocus="(this.type='date')" onblur="(this.type='text')" onchange="applyHistoryFilters()" style="min-height: 33px; background-color: #f8f9fa !important;">
             </div>
             <div class="col-md-3 col-6">
               <select id="historySupplierFilter" class="form-select p-1" onchange="applyHistoryFilters()">
