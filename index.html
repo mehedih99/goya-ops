@@ -43,8 +43,21 @@
     
     .table-container { background: #fff; border-radius: 8px; overflow-x: auto; width: 100%; margin-top: 10px; }
     .table { margin-bottom: 0; font-size: 0.8rem; }
-    .table th, .table td { padding: 8px; text-align: center; white-space: nowrap; }
+    .table th, .table td { padding: 8px; text-align: center; white-space: nowrap; vertical-align: middle; }
     .table thead { background-color: #1f4e78; color: #ffffff; }
+
+    /* Modern UI Custom Counters Dashboard styling */
+    .counter-card { background: #fff; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: all 0.2s; border-left: 4px solid #ced4da; }
+    .counter-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .counter-label { font-size: 0.7rem; font-weight: 700; color: #888; tracking-wider: 0.5px; text-transform: uppercase; margin-bottom: 2px; }
+    .counter-value { font-size: 1.4rem; font-weight: 700; color: #333; line-height: 1; }
+
+    /* Professional Color Badges for Table Statuses */
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; display: inline-block; }
+    .status-pending { background-color: #fee2e2; color: #991b1b; }
+    .status-ordered { background-color: #fef3c7; color: #92400e; }
+    .status-received { background-color: #d1fae5; color: #065f46; }
+    .status-notreceived { background-color: #f3e8ff; color: #6b21a8; }
     
     @media (max-width: 576px) {
       body { padding: 5px; }
@@ -77,12 +90,11 @@
   </ul>
 
   <div class="tab-content text-start" id="pills-tabContent">
-    <!-- TAB 1: SEND ORDER -->
     <div class="tab-pane fade show active" id="pills-order" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-primary">Create Purchase Request</h5>
-        <div class="row g-2 mb-3">
-          <div class="col-md-5 search-container">
+        <div class="row g-2 mb-2">
+          <div class="col-md-4 search-container">
             <label class="form-label">Search Item</label>
             <input type="text" id="itemSearch" class="form-control" placeholder="Search supplier items..." oninput="filterItems('order', 'itemSearch', 'suggestions', 'supplierInput', 'unitInput')" autocomplete="off">
             <ul id="suggestions" class="suggestions-list"></ul>
@@ -95,9 +107,16 @@
             <label class="form-label">Unit</label>
             <select id="unitInput" class="form-select"></select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Supplier</label>
             <input type="text" id="supplierInput" class="form-control" readonly placeholder="Auto">
+          </div>
+        </div>
+        
+        <div class="row g-2 mb-3">
+          <div class="col-12">
+            <label class="form-label text-secondary">Special Item Note (Optional)</label>
+            <input type="text" id="itemNoteInput" class="form-control" placeholder="e.g., Need light roast / check expiry date...">
           </div>
         </div>
         <button class="btn btn-custom w-100 mb-3" onclick="addItemToCart()">+ Add Item to Current List</button>
@@ -106,10 +125,10 @@
         <div class="table-container mb-3">
           <table class="table table-hover table-striped">
             <thead>
-              <tr><th>Item Name</th><th>Qty</th><th>Unit</th><th>Supplier</th></tr>
+              <tr><th>Item Name</th><th>Qty</th><th>Unit</th><th>Supplier</th><th>Item Note</th></tr>
             </thead>
             <tbody id="cartBody">
-              <tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>
+              <tr><td colspan="5" class="text-muted text-center">No items added yet.</td></tr>
             </tbody>
           </table>
         </div>
@@ -126,7 +145,6 @@
       </div>
     </div>
 
-    <!-- TAB 2: PRODUCTION LOG -->
     <div class="tab-pane fade" id="pills-production" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-info">🥣 Internal Production / Batch Prep</h5>
@@ -157,7 +175,6 @@
           </div>
         </div>
 
-        <!-- 📅 ডায়নামিক হেডিং আইডি সহ প্রোডাকশন টেবিল -->
         <h6 class="text-secondary mt-2" id="prodHeadingText">📋 Current Month Production History</h6>
         <div class="table-container">
           <table class="table table-striped table-hover">
@@ -172,7 +189,6 @@
       </div>
     </div>
 
-    <!-- TAB 3: WASTAGE LOG -->
     <div class="tab-pane fade" id="pills-wastage" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-danger">🗑️ Waste & Spillage Logger</h5>
@@ -213,7 +229,6 @@
           </div>
         </div>
 
-        <!-- 📅 ডায়নামিক হেডিং আইডি সহ ওয়েস্টেজ টেবিল -->
         <h6 class="text-secondary mt-2" id="wasteHeadingText">📋 Current Month Wastage History</h6>
         <div class="table-container">
           <table class="table table-striped table-hover">
@@ -228,32 +243,79 @@
       </div>
     </div>
 
-    <!-- TAB 4: ORDER HISTORY -->
     <div class="tab-pane fade" id="pills-history" role="tabpanel">
       <div class="card">
         <h5 class="mb-3 text-primary">Live Order History</h5>
+        
+        <div class="row g-2 mb-3">
+          <div class="col-6 col-md-3">
+            <div onclick="filterByCardStatus('Pending')" class="counter-card" style="border-left-color: #dc3545;">
+              <div class="counter-label">⏳ Pending</div>
+              <div id="count-pending" class="counter-value">0</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div onclick="filterByCardStatus('Ordered')" class="counter-card" style="border-left-color: #ffc107;">
+              <div class="counter-label">📦 Ordered</div>
+              <div id="count-ordered" class="counter-value">0</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div onclick="filterByCardStatus('Received')" class="counter-card" style="border-left-color: #198754;">
+              <div class="counter-label">✅ Received</div>
+              <div id="count-received" class="counter-value">0</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div onclick="filterByCardStatus('Not received')" class="counter-card" style="border-left-color: #6f42c1;">
+              <div class="counter-label">❌ Not received</div>
+              <div id="count-notreceived" class="counter-value">0</div>
+            </div>
+          </div>
+        </div>
+
         <div class="filter-card p-2 bg-light rounded mb-3" style="font-size:0.8rem;">
           <div class="row g-2">
-            <div class="col-4">
+            <div class="col-md-3 col-6">
               <input type="text" id="historySearch" class="form-control p-1" placeholder="Search item..." oninput="applyHistoryFilters()">
             </div>
-            <div class="col-4">
+            <div class="col-md-3 col-6">
               <input type="date" id="historyDate" class="form-control p-1" onchange="applyHistoryFilters()">
             </div>
-            <div class="col-4">
+            <div class="col-md-3 col-6">
               <select id="historySupplierFilter" class="form-select p-1" onchange="applyHistoryFilters()">
                 <option value="">All Suppliers</option>
               </select>
             </div>
+            
+            <div class="col-md-3 col-6">
+              <select id="historyStatusFilter" class="form-select p-1" onchange="applyHistoryFilters()">
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Ordered">Ordered</option>
+                <option value="Received">Received</option>
+                <option value="Not received">Not received</option>
+              </select>
+            </div>
           </div>
         </div>
+        
         <div class="table-container">
           <table class="table table-hover table-striped">
             <thead>
-              <tr><th>Date</th><th>Item Name</th><th>Qty</th><th>Unit</th><th>Supplier</th><th>Status</th><th>Received</th><th>By</th></tr>
+              <tr>
+                <th>Date</th>
+                <th>Item Name</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Supplier</th>
+                <th>Status</th>
+                <th>Remarks / Notes</th> <th>Received</th>
+                <th>By</th>
+              </tr>
             </thead>
             <tbody id="historyBody">
-              <tr><td colspan="8" class="text-center text-muted">Loading live logs...</td></tr>
+              <tr><td colspan="9" class="text-center text-muted">Loading live logs...</td></tr>
             </tbody>
           </table>
         </div>
@@ -290,15 +352,12 @@
     });
   };
 
-  // 📅 অটোমেটিক কারেন্ট মাসের নাম এবং ১ থেকে শেষ তারিখ জেনারেট করার জাভাস্ক্রিপ্ট ফাংশন
   function updateDynamicHeadings() {
     const monthNames = ["June", "June", "June", "June", "June", "June", "June", "June", "June", "June", "June", "June"]; 
     const now = new Date();
     const currentMonthName = now.toLocaleString('en-US', { month: 'long' });
     const year = now.getFullYear();
     const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
-    
-    const headingString = `📋 ${currentMonthName} History (${currentMonthName} 01st - ${currentMonthName} ${lastDay}th)`;
     
     document.getElementById("prodHeadingText").innerText = "📋 " + currentMonthName + " Production History (" + currentMonthName + " 01st - " + currentMonthName + " " + lastDay + "th)";
     document.getElementById("wasteHeadingText").innerText = "📋 " + currentMonthName + " Wastage History (" + currentMonthName + " 01st - " + currentMonthName + " " + lastDay + "th)";
@@ -356,20 +415,24 @@
     let itemObj = activeSelections['order'];
     let qty = document.getElementById('qtyInput').value;
     let selectedUnit = document.getElementById('unitInput').value;
+    let itemNote = document.getElementById('itemNoteInput').value.trim(); // নোট রিড করা হলো
+    
     if(!itemObj || !qty || !selectedUnit) { alert('Please select a valid item and enter Quantity!'); return; }
 
     let existingItem = cart.find(i => i.name.toLowerCase() === itemObj.name.toLowerCase() && i.unit === selectedUnit);
     if (existingItem) {
       existingItem.qty = Number(existingItem.qty) + Number(qty);
+      if(itemNote) existingItem.note = itemNote; // আপডেট নোট
     } else {
       if(cart.length === 0) document.getElementById('cartBody').innerHTML = '';
-      cart.push({ name: itemObj.name, supplier: itemObj.supplier, unit: selectedUnit, qty: Number(qty) });
+      cart.push({ name: itemObj.name, supplier: itemObj.supplier, unit: selectedUnit, qty: Number(qty), note: itemNote || "" });
     }
 
     updateCartTable();
     document.getElementById('qtyInput').value = '';
     document.getElementById('itemSearch').value = '';
     document.getElementById('supplierInput').value = '';
+    document.getElementById('itemNoteInput').value = ''; // ক্লিয়ার নোট বক্স
     document.getElementById('unitInput').innerHTML = '';
     activeSelections['order'] = null;
   }
@@ -378,7 +441,7 @@
     let tbody = document.getElementById('cartBody');
     tbody.innerHTML = '';
     cart.forEach(item => {
-      tbody.innerHTML += `<tr><td class="text-start">${item.name}</td><td><strong>${item.qty}</strong></td><td>${item.unit}</td><td>${item.supplier}</td></tr>`;
+      tbody.innerHTML += `<tr><td class="text-start">${item.name}</td><td><strong>${item.qty}</strong></td><td>${item.unit}</td><td>${item.supplier}</td><td class="text-muted italic">${item.note || '-'}</td></tr>`;
     });
   }
 
@@ -397,20 +460,23 @@
       let now = new Date();
       let timeStr = now.toLocaleString('en-US', { hour12: true });
       
-      // 🌟 এনকোডিং সেফ টেক্সট-ইমোজি ফরম্যাট যাতে কোনো ডিভাইসেই মেসেজ না ভেঙে যায়
       let msg = `=== NEW PURCHASE ORDER ===\n----------------------------------\n\n`;
       let grouped = {};
       cart.forEach(i => { if(!grouped[i.supplier]) grouped[i.supplier] = []; grouped[i.supplier].push(i); });
       for (let s in grouped) {
         msg += `Supplier: ${s}\n`;
-        grouped[s].forEach(i => { msg += ` - ${i.name}: ${i.qty} ${i.unit}\n`; });
+        grouped[s].forEach(i => { 
+          msg += ` - ${i.name}: ${i.qty} ${i.unit}`;
+          if(i.note) msg += ` (*Note: ${i.note}*)`; // হোয়াটসঅ্যাপে নোট যুক্ত করা হলো
+          msg += `\n`;
+        });
         msg += `\n`;
       }
       msg += `----------------------------------\nSubmitted By: ${staffName}\nDate & Time: ${timeStr}\n\nGenerated via Goya Portal`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
       
       cart = [];
-      document.getElementById('cartBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>';
+      document.getElementById('cartBody').innerHTML = '<tr><td colspan="5" class="text-muted text-center">No items added yet.</td></tr>';
       document.getElementById('staffCode').value = '';
       document.getElementById('submitBtn').disabled = false;
     }).catch(() => { alert("Submission error."); document.getElementById('submitBtn').disabled = false; });
@@ -496,37 +562,82 @@
 
   function loadHistory() {
     let tbody = document.getElementById('historyBody');
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Fetching records...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Fetching records...</td></tr>';
     fetch(API_URL + "?action=getHistory").then(res => res.json()).then(data => {
       historyData = (data || []).reverse();
+      
       let supplierSelect = document.getElementById('historySupplierFilter');
       supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
       let uniqueSuppliers = [...new Set(historyData.map(r => r.supplier).filter(Boolean))];
       uniqueSuppliers.forEach(sup => {
         let opt = document.createElement('option'); opt.value = sup; opt.text = sup; supplierSelect.appendChild(opt);
       });
+      
+      calculateDashboardCounters(historyData); // ড্যাশবোর্ড কাউন্ট কল করা হলো
       renderHistoryTable(historyData);
     });
+  }
+
+  // 📊 ৪টি ড্যাশবোর্ড কার্ডের ক্যালকুলেশন লজিক
+  function calculateDashboardCounters(data) {
+    let pending = 0, ordered = 0, received = 0, notreceived = 0;
+    data.forEach(r => {
+      let s = r.status ? r.status.trim().toLowerCase() : 'pending';
+      if(s === 'pending') pending++;
+      else if(s === 'ordered') ordered++;
+      else if(s === 'received') received++;
+      else if(s === 'not received') notreceived++;
+    });
+    document.getElementById('count-pending').innerText = pending;
+    document.getElementById('count-ordered').innerText = ordered;
+    document.getElementById('count-received').innerText = received;
+    document.getElementById('count-notreceived').innerText = notreceived;
+  }
+
+  // 🖱️ ড্যাশবোর্ড কার্ডের কুইক ক্লিক ফিল্টার অপশন
+  function filterByCardStatus(statusName) {
+    document.getElementById('historyStatusFilter').value = statusName;
+    applyHistoryFilters();
   }
 
   function applyHistoryFilters() {
     let searchVal = document.getElementById('historySearch').value.toLowerCase();
     let dateVal = document.getElementById('historyDate').value;
     let supplierVal = document.getElementById('historySupplierFilter').value;
+    let statusVal = document.getElementById('historyStatusFilter').value.toLowerCase(); // স্ট্যাটাস ভ্যালু
+    
     let filtered = historyData.filter(r => {
       let matchSearch = r.item.toLowerCase().includes(searchVal);
       let matchSupplier = supplierVal ? r.supplier === supplierVal : true;
       let matchDate = dateVal ? r.rawDate === dateVal : true;
-      return matchSearch && matchSupplier && matchDate;
+      let matchStatus = statusVal ? (r.status ? r.status.trim().toLowerCase() : 'pending') === statusVal : true;
+      return matchSearch && matchSupplier && matchDate && matchStatus;
     });
     renderHistoryTable(filtered);
   }
 
   function renderHistoryTable(data) {
     let tbody = document.getElementById('historyBody'); tbody.innerHTML = '';
-    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No matching records found.</td></tr>'; return; }
+    if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No matching records found.</td></tr>'; return; }
+    
     data.forEach(r => {
-      tbody.innerHTML += `<tr><td class="small text-muted">${r.date}</td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td>${r.supplier}</td><td><span class="badge bg-warning text-dark">${r.status}</span></td><td><span>${r.receivedDate || ''}</span></td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
+      // 🎨 ডায়নামিক স্ট্যাটাস কালার জেনারেটর মেথড
+      let currentStatus = r.status ? r.status.trim() : 'Pending';
+      let statusClass = 'status-pending';
+      if(currentStatus.toLowerCase() === 'ordered') statusClass = 'status-ordered';
+      else if(currentStatus.toLowerCase() === 'received') statusClass = 'status-received';
+      else if(currentStatus.toLowerCase() === 'not received') statusClass = 'status-notreceived';
+
+      tbody.innerHTML += `<tr>
+        <td class="small text-muted">${r.date}</td>
+        <td class="text-start">${r.item}</td>
+        <td><strong>${r.qty}</strong></td>
+        <td>${r.unit}</td>
+        <td>${r.supplier}</td>
+        <td><span class="status-badge ${statusClass}">${currentStatus}</span></td>
+        <td class="text-muted italic">${r.remarks || r.note || '-'}</td> <td><span>${r.receivedDate || ''}</span></td>
+        <td><span class="badge bg-secondary">${r.by}</span></td>
+      </tr>`;
     });
   }
 </script>
