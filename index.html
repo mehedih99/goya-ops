@@ -353,7 +353,6 @@
   };
 
   function updateDynamicHeadings() {
-    const monthNames = ["June", "June", "June", "June", "June", "June", "June", "June", "June", "June", "June", "June"]; 
     const now = new Date();
     const currentMonthName = now.toLocaleString('en-US', { month: 'long' });
     const year = now.getFullYear();
@@ -415,14 +414,14 @@
     let itemObj = activeSelections['order'];
     let qty = document.getElementById('qtyInput').value;
     let selectedUnit = document.getElementById('unitInput').value;
-    let itemNote = document.getElementById('itemNoteInput').value.trim(); // নোট রিড করা হলো
+    let itemNote = document.getElementById('itemNoteInput').value.trim();
     
     if(!itemObj || !qty || !selectedUnit) { alert('Please select a valid item and enter Quantity!'); return; }
 
     let existingItem = cart.find(i => i.name.toLowerCase() === itemObj.name.toLowerCase() && i.unit === selectedUnit);
     if (existingItem) {
       existingItem.qty = Number(existingItem.qty) + Number(qty);
-      if(itemNote) existingItem.note = itemNote; // আপডেট নোট
+      if(itemNote) existingItem.note = itemNote;
     } else {
       if(cart.length === 0) document.getElementById('cartBody').innerHTML = '';
       cart.push({ name: itemObj.name, supplier: itemObj.supplier, unit: selectedUnit, qty: Number(qty), note: itemNote || "" });
@@ -432,7 +431,7 @@
     document.getElementById('qtyInput').value = '';
     document.getElementById('itemSearch').value = '';
     document.getElementById('supplierInput').value = '';
-    document.getElementById('itemNoteInput').value = ''; // ক্লিয়ার নোট বক্স
+    document.getElementById('itemNoteInput').value = '';
     document.getElementById('unitInput').innerHTML = '';
     activeSelections['order'] = null;
   }
@@ -467,7 +466,7 @@
         msg += `Supplier: ${s}\n`;
         grouped[s].forEach(i => { 
           msg += ` - ${i.name}: ${i.qty} ${i.unit}`;
-          if(i.note) msg += ` (*Note: ${i.note}*)`; // হোয়াটসঅ্যাপে নোট যুক্ত করা হলো
+          if(i.note) msg += ` (*Note: ${i.note}*)`;
           msg += `\n`;
         });
         msg += `\n`;
@@ -542,7 +541,11 @@
     fetch(API_URL + "?action=getProdHistory").then(res => res.json()).then(data => {
       tbody.innerHTML = '';
       if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No records for this month.</td></tr>'; return; }
-      data.reverse().forEach(r => {
+      
+      // প্রোডাকশন লগের অলওয়েজ নিউয়েস্ট ফার্স্ট সর্টিং লজিক
+      data.sort((a, b) => (b.timestamp || new Date(b.rawDate || b.date).getTime()) - (a.timestamp || new Date(a.rawDate || a.date).getTime()));
+      
+      data.forEach(r => {
         tbody.innerHTML += `<tr><td><strong>${r.date}</strong></td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
       });
     });
@@ -554,7 +557,11 @@
     fetch(API_URL + "?action=getWasteHistory").then(res => res.json()).then(data => {
       tbody.innerHTML = '';
       if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records for this month.</td></tr>'; return; }
-      data.reverse().forEach(r => {
+      
+      // ওয়েস্টেজ লগের অলওয়েজ নিউয়েস্ট ফার্স্ট সর্টিং লজিক
+      data.sort((a, b) => (b.timestamp || new Date(b.rawDate || b.date).getTime()) - (a.timestamp || new Date(a.rawDate || a.date).getTime()));
+      
+      data.forEach(r => {
         tbody.innerHTML += `<tr><td><strong>${r.date}</strong></td><td class="text-start">${r.item}</td><td><strong>${r.qty}</strong></td><td>${r.unit}</td><td><span class="text-danger font-weight-bold">${r.reason}</span></td><td><span class="badge bg-secondary">${r.by}</span></td></tr>`;
       });
     });
@@ -564,7 +571,13 @@
     let tbody = document.getElementById('historyBody');
     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Fetching records...</td></tr>';
     fetch(API_URL + "?action=getHistory").then(res => res.json()).then(data => {
-      historyData = (data || []).reverse();
+      
+      // 🚀 গ্লোবাল নিউয়েস্ট টু ওল্ডেস্ট ক্রোনোলজিক্যাল সর্টিং লজিক (যা মাস ও বছর ব্যাপী কাজ করবে)
+      historyData = (data || []).sort((a, b) => {
+        let timeA = a.timestamp || new Date(a.rawDate || a.date).getTime();
+        let timeB = b.timestamp || new Date(b.rawDate || b.date).getTime();
+        return timeB - timeA;
+      });
       
       let supplierSelect = document.getElementById('historySupplierFilter');
       supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
@@ -573,12 +586,11 @@
         let opt = document.createElement('option'); opt.value = sup; opt.text = sup; supplierSelect.appendChild(opt);
       });
       
-      calculateDashboardCounters(historyData); // ড্যাশবোর্ড কাউন্ট কল করা হলো
+      calculateDashboardCounters(historyData);
       renderHistoryTable(historyData);
     });
   }
 
-  // 📊 ৪টি ড্যাশবোর্ড কার্ডের ক্যালকুলেশন লজিক
   function calculateDashboardCounters(data) {
     let pending = 0, ordered = 0, received = 0, notreceived = 0;
     data.forEach(r => {
@@ -594,7 +606,6 @@
     document.getElementById('count-notreceived').innerText = notreceived;
   }
 
-  // 🖱️ ড্যাশবোর্ড কার্ডের কুইক ক্লিক ফিল্টার অপশন
   function filterByCardStatus(statusName) {
     document.getElementById('historyStatusFilter').value = statusName;
     applyHistoryFilters();
@@ -604,7 +615,7 @@
     let searchVal = document.getElementById('historySearch').value.toLowerCase();
     let dateVal = document.getElementById('historyDate').value;
     let supplierVal = document.getElementById('historySupplierFilter').value;
-    let statusVal = document.getElementById('historyStatusFilter').value.toLowerCase(); // স্ট্যাটাস ভ্যালু
+    let statusVal = document.getElementById('historyStatusFilter').value.toLowerCase();
     
     let filtered = historyData.filter(r => {
       let matchSearch = r.item.toLowerCase().includes(searchVal);
@@ -621,7 +632,6 @@
     if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No matching records found.</td></tr>'; return; }
     
     data.forEach(r => {
-      // 🎨 ডায়নামিক স্ট্যাটাস কালার জেনারেটর মেথড
       let currentStatus = r.status ? r.status.trim() : 'Pending';
       let statusClass = 'status-pending';
       if(currentStatus.toLowerCase() === 'ordered') statusClass = 'status-ordered';
