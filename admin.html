@@ -3,72 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Goya Portal - Admin Panel</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.min.css" rel="stylesheet">
+  <title>Goya Portal - Core Administration</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    body { background-color: #d1d1d3; font-family: 'Segoe UI', Arial, sans-serif; color: #333; }
-    .admin-container { max-width: 1100px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .logo-container { text-align: center; margin-bottom: 25px; }
-    .logo-container img { max-height: 60px; }
-    .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
-    .table th { background-color: #f8f9fa; font-weight: 600; text-align: center; }
-    .table td { vertical-align: middle; text-align: center; }
-    .badge-pending { background-color: #ffc107; color: black; }
-    .badge-ordered { background-color: #fd7e14; color: white; }
-    .badge-received { background-color: #198754; color: white; }
-    .badge-notreceived { background-color: #dc3545; color: white; }
+    :root {
+      --goya-bg: #d1d1d3;
+      --goya-dark: #1f4e78;
+      --goya-accent: #153552;
+    }
+    body { background-color: var(--goya-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; overflow-x: hidden; }
+    
+    /* 🔒 PIN GATE STYLING */
+    .gate-container { max-width: 420px; margin: 120px auto; background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; border: 1px solid rgba(0,0,0,0.05); }
+    .gate-icon { font-size: 3.5rem; color: var(--goya-dark); margin-bottom: 15px; }
+    
+    /* 🎛️ DASHBOARD LAYOUT */
+    .sidebar { background-color: #ffffff; min-height: 100vh; box-shadow: 4px 0 15px rgba(0,0,0,0.03); padding: 25px 20px; border-right: 1px solid rgba(0,0,0,0.05); }
+    .main-content { padding: 30px; }
+    .brand-title { font-weight: 700; color: var(--goya-dark); letter-spacing: 1px; font-size: 1.25rem; }
+    
+    /* CARD & DATA CONTROLLERS */
+    .data-card { background: #ffffff; border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: none; margin-bottom: 25px; }
+    .table-responsive { border-radius: 10px; overflow: hidden; border: 1px solid #dee2e6; background: #fff; }
+    
+    .table th { background-color: var(--goya-dark) !important; color: white !important; font-weight: 600; text-align: center; font-size: 0.85rem; padding: 12px 8px; }
+    .table td { vertical-align: middle; text-align: center; font-size: 0.85rem; padding: 10px 8px; }
+    
+    /* STATUS PILLS */
+    .badge-status { padding: 6px 12px; border-radius: 30px; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; display: inline-block; }
+    .badge-pending { background-color: #fee2e2; color: #991b1b; }
+    .badge-ordered { background-color: #fef3c7; color: #92400e; }
+    .badge-received { background-color: #d1fae5; color: #065f46; }
+    .badge-notreceived { background-color: #f3e8ff; color: #6b21a8; }
+    
+    .form-control-sm, .form-select-sm { border-radius: 6px; border: 1px solid #ced4da; font-size: 0.82rem; padding: 5px 8px; }
+    .btn-save { background-color: var(--goya-dark); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-weight: 600; transition: all 0.2s; font-size: 0.8rem; }
+    .btn-save:hover { background-color: var(--goya-accent); color: white; }
+    
+    #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none; min-width: 300px; border-radius: 10px; }
   </style>
 </head>
 <body>
 
-  <!-- 🔒 SECURITY PIN GATE -->
-  <div id="pinGate" class="gate-container">
-    <h3 class="mb-4">GOYA ADMIN GATEWAY</h3>
-    <div class="mb-3">
-      <input type="password" id="adminPinInput" class="form-control text-center form-control-lg" placeholder="Enter Admin Master PIN">
+  <div id="toastAlert" class="alert alert-dark shadow-lg text-white bg-dark border-0 align-items-center" role="alert">
+    <div class="d-flex p-2">
+      <i class="bi bi-info-circle-fill me-2"></i>
+      <div id="toastMessage" class="flex-grow-1">Database Sync Active.</div>
     </div>
-    <button class="btn btn-dark w-100 btn-lg" onclick="verifyAdminGate()">Unlock Dashboard</button>
-    <p id="gateError" class="text-danger mt-3 d-none">Invalid Admin PIN!</p>
   </div>
 
-  <!-- 🎛️ MAIN ADMIN PANEL DASHBOARD -->
-  <div id="adminPanel" class="admin-container d-none">
-    <div class="logo-container">
-      <h2>GOYA CORE MANAGEMENT</h2>
-      <p class="text-muted">Live Order Overrider & Status Controller</p>
+  <div id="pinGate" class="gate-container">
+    <div class="gate-icon"><i class="bi bi-shield-lock-fill"></i></div>
+    <h4 class="fw-bold mb-2">GOYA CORE SECURITY</h4>
+    <p class="text-muted small mb-4">Please input your Master Admin PIN to fetch live operations</p>
+    <div class="mb-3">
+      <input type="password" id="adminPinInput" class="form-control text-center form-control-lg fw-bold" placeholder="••••" style="letter-spacing: 6px; font-size: 1.5rem;">
     </div>
+    <button class="btn btn-dark w-100 btn-lg fw-bold" onclick="verifyAdminGate()">Unlock Dashboard</button>
+    <p id="gateError" class="text-danger mt-3 small d-none"><i class="bi bi-exclamation-triangle-fill"></i> Access Denied. Invalid PIN.</p>
+  </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4>Live Active Submissions</h4>
-      <button class="btn btn-primary" onclick="loadAdminHistory()">🔄 Refresh Data</button>
-    </div>
+  <div id="adminPanel" class="container-fluid d-none">
+    <div class="row">
+      
+      <div class="col-md-3 col-lg-2 sidebar">
+        <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
+          <i class="bi bi-cpu-fill text-primary fs-4 me-2"></i>
+          <span class="brand-title">GOYA CORE</span>
+        </div>
+        <p class="text-muted small text-transform uppercase fw-bold mb-3">Operations</p>
+        <ul class="nav nav-pills flex-column gap-2 mb-4">
+          <li class="nav-item">
+            <a class="nav-link active bg-dark text-white" href="#"><i class="bi bi-layers-half me-2"></i> Order Live Overrider</a>
+          </li>
+        </ul>
+        <div class="pt-4 border-top">
+          <button class="btn btn-danger btn-sm w-100" onclick="location.reload()"><i class="bi bi-box-arrow-left me-1"></i> Lock Console</button>
+        </div>
+      </div>
 
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Item Name</th>
-            <th>Qty</th>
-            <th>Supplier</th>
-            <th>Current Status</th>
-            <th>Update Action</th>
-            <th>Received Date</th>
-            <th>Manager Remarks</th>
-            <th>Submit</th>
-          </tr>
-        </thead>
-        <tbody id="adminOrderTableBody">
-          <tr><td colspan="9" class="text-muted">Loading data from spreadsheet database...</td></tr>
-        </tbody>
-      </table>
+      <div class="col-md-9 col-lg-10 main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="fw-bold m-0" style="color: #2c3e50;">Live Submission Control</h2>
+            <p class="text-muted m-0 small">Override states and map received timelines directly to the spreadsheet grid.</p>
+          </div>
+          <button class="btn btn-white border bg-white shadow-sm fw-bold px-3 py-2" onclick="loadAdminHistory()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh Grid
+          </button>
+        </div>
+
+        <div class="data-card">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 12%;">Submission Date</th>
+                  <th style="width: 20%; text-align: left;">Item Name</th>
+                  <th style="width: 8%;">Quantity</th>
+                  <th style="width: 12%;">Supplier</th>
+                  <th style="width: 10%;">Current State</th>
+                  <th style="width: 12%;">Change Action</th>
+                  <th style="width: 12%;">Received Date</th>
+                  <th style="width: 15%;">Manager Remarks</th>
+                  <th style="width: 7%;">Commit</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrderTableBody">
+                <tr><td colspan="9" class="text-muted p-4">Awaiting security authentication state validation...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
-    // ⚠️ আপনার গুগল ওয়েব অ্যাপ ইউআরএলটি এখানে বসাবেন
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxqyxuQoTfqs8S2CQ6g-g-CzjqzThwzeCzmRMphbdpQnM8jIyLjiUy228QkwKTMH2VxXQ/exec";
-    const MASTER_ADMIN_PIN = "3898"; // আপনি চাইলে আপনার নিজের সিক্রেট পিন এখানে সেট করতে পারেন
+    // 🔗 আপনার অরিজিনাল মেইন স্ক্রিপ্ট API ইউআরএল
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxA04ds9skuy0ljcoIA76Sj_lfVU7XkZ5heR9dc7seXuVAWFd1T5Jc8vTT7luMucKCJNw/exec";
+    const MASTER_ADMIN_PIN = "3898"; 
+
+    function triggerToast(msg) {
+      const toast = document.getElementById("toastAlert");
+      document.getElementById("toastMessage").innerText = msg;
+      toast.style.display = "flex";
+      setTimeout(() => { toast.style.display = "none"; }, 4000);
+    }
 
     function verifyAdminGate() {
       const input = document.getElementById("adminPinInput").value.trim();
@@ -83,56 +146,58 @@
 
     function loadAdminHistory() {
       const tbody = document.getElementById("adminOrderTableBody");
-      tbody.innerHTML = `<tr><td colspan="9" class="text-primary">Fetching records... Please wait.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="text-primary p-4"><div class="spinner-border spinner-border-sm me-2"></div>Fetching clean runtime datablocks...</td></tr>`;
       
       fetch(`${WEB_APP_URL}?action=getHistory`)
         .then(res => res.json())
         .then(data => {
-          if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-muted">No submissions found in Database.</td></tr>`;
+          if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-muted p-4">No logged items inside spreadsheet cells.</td></tr>`;
             return;
           }
           tbody.innerHTML = "";
           data.forEach((row, index) => {
             const tr = document.createElement("tr");
             
-            // স্ট্যাটাস পিল ক্লাস ডিটারমিনেশন
             let statusClass = "badge-pending";
-            if(row.status === "ORDERED") statusClass = "badge-ordered";
-            if(row.status === "RECEIVED") statusClass = "badge-received";
-            if(row.status === "NOT RECEIVED") statusClass = "badge-notreceived";
+            if(row.status.toUpperCase() === "ORDERED") statusClass = "badge-ordered";
+            if(row.status.toUpperCase() === "RECEIVED") statusClass = "badge-received";
+            if(row.status.toUpperCase() === "NOT RECEIVED") statusClass = "badge-notreceived";
 
+            // সোর্স ফিক্স: বাম পাশে ভুল কোড প্রিন্ট হওয়া চিরতরে বন্ধ করার প্রফেশনাল মেথড
             tr.innerHTML = `
-              <td>small class="text-muted">${row.date}</small></td>
-              <td class="fw-bold">${row.item}</td>
-              <td>${row.qty} <span class="text-muted">${row.unit}</span></td>
-              <td><span class="badge bg-secondary">${row.supplier}</span></td>
-              <td><span class="badge ${statusClass}">${row.status}</span></td>
+              <td><span class="text-muted font-monospace small">${row.date}</span></td>
+              <td class="fw-bold text-start text-dark">${row.item}</td>
+              <td><span class="badge bg-light text-dark fs-6 border">${row.qty} ${row.unit}</span></td>
+              <td><span class="badge bg-secondary px-2 py-1">${row.supplier}</span></td>
+              <td><span class="badge-status ${statusClass}">${row.status}</span></td>
               <td>
-                <select id="status_${index}" class="form-select form-select-sm" onchange="toggleDateInput(${index})">
-                  <option value="PENDING" ${row.status==="PENDING"?"selected":""}>PENDING</option>
-                  <option value="ORDERED" ${row.status==="ORDERED"?"selected":""}>ORDERED</option>
-                  <option value="RECEIVED" ${row.status==="RECEIVED"?"selected":""}>RECEIVED</option>
-                  <option value="NOT RECEIVED" ${row.status==="NOT RECEIVED"?"selected":""}>NOT RECEIVED</option>
+                <select id="status_${index}" class="form-select form-select-sm fw-bold" onchange="toggleDateInput(${index})">
+                  <option value="PENDING" ${row.status.toUpperCase()==="PENDING"?"selected":""}>PENDING</option>
+                  <option value="ORDERED" ${row.status.toUpperCase()==="ORDERED"?"selected":""}>ORDERED</option>
+                  <option value="RECEIVED" ${row.status.toUpperCase()==="RECEIVED"?"selected":""}>RECEIVED</option>
+                  <option value="NOT RECEIVED" ${row.status.toUpperCase()==="NOT RECEIVED"?"selected":""}>NOT RECEIVED</option>
                 </select>
               </td>
               <td>
-                <input type="date" id="date_${index}" class="form-control form-control-sm" 
+                <input type="date" id="date_${index}" class="form-control form-control-sm text-center" 
                   value="${row.receivedDate ? row.receivedDate : ""}" 
-                  ${row.status !== "RECEIVED" ? "disabled" : ""}>
+                  ${row.status.toUpperCase() !== "RECEIVED" ? "disabled" : ""}>
               </td>
               <td>
-                <input type="text" id="remarks_${index}" class="form-control form-control-sm" placeholder="Add Note" value="${row.remarks || ''}">
+                <input type="text" id="remarks_${index}" class="form-control form-control-sm" placeholder="Manager Notes" value="${row.remarks || ''}">
               </td>
               <td>
-                <button class="btn btn-sm btn-dark" onclick="updateRowState(${index}, '${row.rawDate}', '${btoa(row.item)}', ${row.qty})">Save</button>
+                <button class="btn-save shadow-sm" onclick="updateRowState(${index}, '${row.rawDate}', '${btoa(unescape(encodeURIComponent(row.item)))}', ${row.qty})">
+                  <i class="bi bi-check-circle-fill"></i>
+                </button>
               </td>
             `;
             tbody.appendChild(tr);
           });
         })
         .catch(err => {
-          tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load data. Verify Web App URL configuration.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="9" class="text-danger p-4">Architecture Fetch Blocked. Verify active parameters.</td></tr>`;
         });
     }
 
@@ -142,7 +207,7 @@
       if (statusSelect === "RECEIVED") {
         dateInput.disabled = false;
         if(!dateInput.value) {
-          dateInput.value = new Date().toISOString().split('T')[0]; // অটোমেটিক আজকের ডেট সেট হবে
+          dateInput.value = new Date().toISOString().split('T')[0];
         }
       } else {
         dateInput.disabled = true;
@@ -154,7 +219,7 @@
       const status = document.getElementById(`status_${index}`).value;
       const receivedDate = document.getElementById(`date_${index}`).value;
       const remarks = document.getElementById(`remarks_${index}`).value.trim();
-      const itemName = atob(base64Item);
+      const itemName = decodeURIComponent(escape(atob(base64Item)));
 
       const payload = {
         action: "adminUpdateOrder",
@@ -166,7 +231,7 @@
         remarks: remarks
       };
 
-      alert("Updating Google Spreadsheet Database... Please click OK.");
+      triggerToast("Syncing with cloud matrix... Please wait.");
 
       fetch(WEB_APP_URL, {
         method: "POST",
@@ -175,13 +240,13 @@
       .then(res => res.json())
       .then(resData => {
         if(resData.status === "Success") {
-          alert("🎉 System Updated Successfully without touching Spreadsheet directly!");
+          triggerToast("Spreadsheet updated successfully!");
           loadAdminHistory();
         } else {
-          alert("❌ Error: Record match not found in row logs.");
+          alert("Row sync parsing missed matching target rows.");
         }
       })
-      .catch(err => alert("Transmission Error. Check internet connection."));
+      .catch(err => alert("Transmission pipeline collapsed. Check network settings."));
     }
   </script>
 </body>
