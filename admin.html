@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Goya Portal - Admin Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #d1d1d3; font-family: 'Segoe UI', Arial, sans-serif; color: #333; }
+    .admin-container { max-width: 1100px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .logo-container { text-align: center; margin-bottom: 25px; }
+    .logo-container img { max-height: 60px; }
+    .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+    .table th { background-color: #f8f9fa; font-weight: 600; text-align: center; }
+    .table td { vertical-align: middle; text-align: center; }
+    .badge-pending { background-color: #ffc107; color: black; }
+    .badge-ordered { background-color: #fd7e14; color: white; }
+    .badge-received { background-color: #198754; color: white; }
+    .badge-notreceived { background-color: #dc3545; color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- 🔒 SECURITY PIN GATE -->
+  <div id="pinGate" class="gate-container">
+    <h3 class="mb-4">GOYA ADMIN GATEWAY</h3>
+    <div class="mb-3">
+      <input type="password" id="adminPinInput" class="form-control text-center form-control-lg" placeholder="Enter Admin Master PIN">
+    </div>
+    <button class="btn btn-dark w-100 btn-lg" onclick="verifyAdminGate()">Unlock Dashboard</button>
+    <p id="gateError" class="text-danger mt-3 d-none">Invalid Admin PIN!</p>
+  </div>
+
+  <!-- 🎛️ MAIN ADMIN PANEL DASHBOARD -->
+  <div id="adminPanel" class="admin-container d-none">
+    <div class="logo-container">
+      <h2>GOYA CORE MANAGEMENT</h2>
+      <p class="text-muted">Live Order Overrider & Status Controller</p>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4>Live Active Submissions</h4>
+      <button class="btn btn-primary" onclick="loadAdminHistory()">🔄 Refresh Data</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item Name</th>
+            <th>Qty</th>
+            <th>Supplier</th>
+            <th>Current Status</th>
+            <th>Update Action</th>
+            <th>Received Date</th>
+            <th>Manager Remarks</th>
+            <th>Submit</th>
+          </tr>
+        </thead>
+        <tbody id="adminOrderTableBody">
+          <tr><td colspan="9" class="text-muted">Loading data from spreadsheet database...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ আপনার গুগল ওয়েব অ্যাপ ইউআরএলটি এখানে বসাবেন
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxqyxuQoTfqs8S2CQ6g-g-CzjqzThwzeCzmRMphbdpQnM8jIyLjiUy228QkwKTMH2VxXQ/exec";
+    const MASTER_ADMIN_PIN = "3898"; // আপনি চাইলে আপনার নিজের সিক্রেট পিন এখানে সেট করতে পারেন
+
+    function verifyAdminGate() {
+      const input = document.getElementById("adminPinInput").value.trim();
+      if (input === MASTER_ADMIN_PIN) {
+        document.getElementById("pinGate").classList.add("d-none");
+        document.getElementById("adminPanel").classList.remove("d-none");
+        loadAdminHistory();
+      } else {
+        document.getElementById("gateError").classList.remove("d-none");
+      }
+    }
+
+    function loadAdminHistory() {
+      const tbody = document.getElementById("adminOrderTableBody");
+      tbody.innerHTML = `<tr><td colspan="9" class="text-primary">Fetching records... Please wait.</td></tr>`;
+      
+      fetch(`${WEB_APP_URL}?action=getHistory`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-muted">No submissions found in Database.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = "";
+          data.forEach((row, index) => {
+            const tr = document.createElement("tr");
+            
+            // স্ট্যাটাস পিল ক্লাস ডিটারমিনেশন
+            let statusClass = "badge-pending";
+            if(row.status === "ORDERED") statusClass = "badge-ordered";
+            if(row.status === "RECEIVED") statusClass = "badge-received";
+            if(row.status === "NOT RECEIVED") statusClass = "badge-notreceived";
+
+            tr.innerHTML = `
+              <td>small class="text-muted">${row.date}</small></td>
+              <td class="fw-bold">${row.item}</td>
+              <td>${row.qty} <span class="text-muted">${row.unit}</span></td>
+              <td><span class="badge bg-secondary">${row.supplier}</span></td>
+              <td><span class="badge ${statusClass}">${row.status}</span></td>
+              <td>
+                <select id="status_${index}" class="form-select form-select-sm" onchange="toggleDateInput(${index})">
+                  <option value="PENDING" ${row.status==="PENDING"?"selected":""}>PENDING</option>
+                  <option value="ORDERED" ${row.status==="ORDERED"?"selected":""}>ORDERED</option>
+                  <option value="RECEIVED" ${row.status==="RECEIVED"?"selected":""}>RECEIVED</option>
+                  <option value="NOT RECEIVED" ${row.status==="NOT RECEIVED"?"selected":""}>NOT RECEIVED</option>
+                </select>
+              </td>
+              <td>
+                <input type="date" id="date_${index}" class="form-control form-control-sm" 
+                  value="${row.receivedDate ? row.receivedDate : ""}" 
+                  ${row.status !== "RECEIVED" ? "disabled" : ""}>
+              </td>
+              <td>
+                <input type="text" id="remarks_${index}" class="form-control form-control-sm" placeholder="Add Note" value="${row.remarks || ''}">
+              </td>
+              <td>
+                <button class="btn btn-sm btn-dark" onclick="updateRowState(${index}, '${row.rawDate}', '${btoa(row.item)}', ${row.qty})">Save</button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          tbody.innerHTML = `<tr><td colspan="9" class="text-danger">Failed to load data. Verify Web App URL configuration.</td></tr>`;
+        });
+    }
+
+    function toggleDateInput(index) {
+      const statusSelect = document.getElementById(`status_${index}`).value;
+      const dateInput = document.getElementById(`date_${index}`);
+      if (statusSelect === "RECEIVED") {
+        dateInput.disabled = false;
+        if(!dateInput.value) {
+          dateInput.value = new Date().toISOString().split('T')[0]; // অটোমেটিক আজকের ডেট সেট হবে
+        }
+      } else {
+        dateInput.disabled = true;
+        dateInput.value = "";
+      }
+    }
+
+    function updateRowState(index, rawDate, base64Item, qty) {
+      const status = document.getElementById(`status_${index}`).value;
+      const receivedDate = document.getElementById(`date_${index}`).value;
+      const remarks = document.getElementById(`remarks_${index}`).value.trim();
+      const itemName = atob(base64Item);
+
+      const payload = {
+        action: "adminUpdateOrder",
+        rawDate: rawDate,
+        itemName: itemName,
+        qty: qty,
+        status: status,
+        receivedDate: receivedDate,
+        remarks: remarks
+      };
+
+      alert("Updating Google Spreadsheet Database... Please click OK.");
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if(resData.status === "Success") {
+          alert("🎉 System Updated Successfully without touching Spreadsheet directly!");
+          loadAdminHistory();
+        } else {
+          alert("❌ Error: Record match not found in row logs.");
+        }
+      })
+      .catch(err => alert("Transmission Error. Check internet connection."));
+    }
+  </script>
+</body>
+</html>
