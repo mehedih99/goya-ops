@@ -165,13 +165,27 @@
             </select>
           </div>
         </div>
+        <button class="btn btn-custom w-100 mb-3" onclick="addProductionToCart()">+ Add Item to Current List</button>
+
+        <h6 class="mb-2 text-secondary">Current Production Items:</h6>
+        <div class="table-container mb-3">
+          <table class="table table-hover table-striped">
+            <thead>
+              <tr><th>Prep Item</th><th>Qty</th><th>Unit</th></tr>
+            </thead>
+            <tbody id="prodCartBody">
+              <tr><td colspan="3" class="text-muted text-center">No items added yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <div class="row g-2 align-items-end pt-2 border-top mb-4">
           <div class="col-5">
             <label class="form-label text-danger">Staff PIN</label>
             <input type="password" id="prodStaffCode" class="form-control text-center" placeholder="••••" style="letter-spacing: 3px; font-weight: bold;">
           </div>
           <div class="col-7">
-            <button class="btn btn-production" id="prodSubmitBtn" onclick="submitProduction()">🥣 Submit Production</button>
+            <button class="btn btn-production" id="prodSubmitBtn" onclick="submitProductionCart()">🥣 Submit Production</button>
           </div>
         </div>
 
@@ -219,13 +233,27 @@
             </select>
           </div>
         </div>
+        <button class="btn btn-custom w-100 mb-3" onclick="addWastageToCart()">+ Add Item to Current List</button>
+
+        <h6 class="mb-2 text-secondary">Current Wastage Items:</h6>
+        <div class="table-container mb-3">
+          <table class="table table-hover table-striped">
+            <thead>
+              <tr><th>Item Name</th><th>Qty</th><th>Unit</th><th>Reason</th></tr>
+            </thead>
+            <tbody id="wasteCartBody">
+              <tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <div class="row g-2 align-items-end pt-2 border-top mb-4">
           <div class="col-5">
             <label class="form-label text-danger">Staff PIN</label>
             <input type="password" id="wasteStaffCode" class="form-control text-center" placeholder="••••" style="letter-spacing: 3px; font-weight: bold;">
           </div>
           <div class="col-7">
-            <button class="btn btn-wastage" id="wasteSubmitBtn" onclick="submitWastage()">🗑️ Submit Wastage</button>
+            <button class="btn btn-wastage" id="wasteSubmitBtn" onclick="submitWastageCart()">🗑️ Submit Wastage</button>
           </div>
         </div>
 
@@ -325,11 +353,13 @@
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbyLFAc_vybxLbtYf9AJvwbAK5XKhhhakWVm5fAV-wnHy9XPyVFm1c_R3serRwiSfqjpqg/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbxA04ds9skuy0ljcoIA76Sj_lfVU7XkZ5heR9dc7seXuVAWFd1T5Jc8vTT7luMucKCJNw/exec";
   
   let masterItems = [];
   let staffCodes = {};
   let cart = [];
+  let productionCart = [];
+  let wastageCart = [];
   let historyData = [];
   let activeSelections = { order: null, production: null, wastage: null };
 
@@ -444,6 +474,70 @@
     });
   }
 
+  /* 🚀 PRODUCTION CART LOGIC */
+  function addProductionToCart() {
+    let itemObj = activeSelections['production'];
+    let qty = document.getElementById('prodQty').value;
+    let selectedUnit = document.getElementById('prodUnit').value;
+
+    if(!itemObj || !qty || !selectedUnit) { alert('Please select a valid item and enter Quantity!'); return; }
+
+    let existingItem = productionCart.find(i => i.name.toLowerCase() === itemObj.name.toLowerCase() && i.unit === selectedUnit);
+    if (existingItem) {
+      existingItem.qty = Number(existingItem.qty) + Number(qty);
+    } else {
+      if(productionCart.length === 0) document.getElementById('prodCartBody').innerHTML = '';
+      productionCart.push({ name: itemObj.name, qty: Number(qty), unit: selectedUnit });
+    }
+
+    updateProductionCartTable();
+    document.getElementById('prodQty').value = '';
+    document.getElementById('prodSearch').value = '';
+    document.getElementById('prodUnit').innerHTML = '';
+    activeSelections['production'] = null;
+  }
+
+  function updateProductionCartTable() {
+    let tbody = document.getElementById('prodCartBody');
+    tbody.innerHTML = '';
+    productionCart.forEach(item => {
+      tbody.innerHTML += `<tr><td class="text-start">${item.name}</td><td><strong>${item.qty}</strong></td><td>${item.unit}</td></tr>`;
+    });
+  }
+
+  /* 🚀 WASTAGE CART LOGIC */
+  function addWastageToCart() {
+    let itemObj = activeSelections['wastage'];
+    let qty = document.getElementById('wasteQty').value;
+    let selectedUnit = document.getElementById('wasteUnit').value;
+    let reason = document.getElementById('wasteReason').value;
+
+    if(!itemObj || !qty || !selectedUnit || !reason) { alert('Please complete all fields to add item!'); return; }
+
+    let existingItem = wastageCart.find(i => i.name.toLowerCase() === itemObj.name.toLowerCase() && i.unit === selectedUnit && i.reason === reason);
+    if (existingItem) {
+      existingItem.qty = Number(existingItem.qty) + Number(qty);
+    } else {
+      if(wastageCart.length === 0) document.getElementById('wasteCartBody').innerHTML = '';
+      wastageCart.push({ name: itemObj.name, qty: Number(qty), unit: selectedUnit, reason: reason });
+    }
+
+    updateWastageCartTable();
+    document.getElementById('wasteQty').value = '';
+    document.getElementById('wasteSearch').value = '';
+    document.getElementById('wasteUnit').innerHTML = '';
+    document.getElementById('wasteReason').value = '';
+    activeSelections['wastage'] = null;
+  }
+
+  function updateWastageCartTable() {
+    let tbody = document.getElementById('wasteCartBody');
+    tbody.innerHTML = '';
+    wastageCart.forEach(item => {
+      tbody.innerHTML += `<tr><td class="text-start">${item.name}</td><td><strong>${item.qty}</strong></td><td>${item.unit}</td><td><span class="text-danger font-weight-bold">${item.reason}</span></td></tr>`;
+    });
+  }
+
   function submitFinalOrder() {
     let code = document.getElementById('staffCode').value.toString().trim();
     let staffName = staffCodes[code];
@@ -481,55 +575,55 @@
     }).catch(() => { alert("Submission error."); document.getElementById('submitBtn').disabled = false; });
   }
 
-  function submitProduction() {
-    let itemObj = activeSelections['production'];
-    let qty = document.getElementById('prodQty').value;
-    let selectedUnit = document.getElementById('prodUnit').value;
+  /* 🚀 BULK PRODUCTION SUBMIT */
+  function submitProductionCart() {
     let code = document.getElementById('prodStaffCode').value.toString().trim();
     let staffName = staffCodes[code];
-
-    if(!itemObj || !qty || !selectedUnit) { alert('Please select an item and quantity!'); return; }
     if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
+    if(productionCart.length === 0) { alert('Your current production list is empty!'); return; }
 
     document.getElementById('prodSubmitBtn').disabled = true;
 
-    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "production", item: itemObj.name, qty: qty, unit: selectedUnit, staffName: staffName }) })
-    .then(res => res.json())
+    let promises = productionCart.map(item => {
+      return fetch(API_URL, { 
+        method: "POST", 
+        body: JSON.stringify({ action: "production", item: item.name, qty: item.qty, unit: item.unit, staffName: staffName }) 
+      });
+    });
+
+    Promise.all(promises)
     .then(() => {
-      alert('Production item logged successfully!');
-      document.getElementById('prodSearch').value = '';
-      document.getElementById('prodQty').value = '';
-      document.getElementById('prodUnit').innerHTML = '<option value="">-- Choose Item First --</option>';
+      alert('All production items logged successfully!');
+      productionCart = [];
+      document.getElementById('prodCartBody').innerHTML = '<tr><td colspan="3" class="text-muted text-center">No items added yet.</td></tr>';
       document.getElementById('prodStaffCode').value = '';
-      activeSelections['production'] = null;
       document.getElementById('prodSubmitBtn').disabled = false;
       loadProdHistory();
     }).catch(() => { alert("Submission Error."); document.getElementById('prodSubmitBtn').disabled = false; });
   }
 
-  function submitWastage() {
-    let itemObj = activeSelections['wastage'];
-    let qty = document.getElementById('wasteQty').value;
-    let selectedUnit = document.getElementById('wasteUnit').value;
-    let reason = document.getElementById('wasteReason').value;
+  /* 🚀 BULK WASTAGE SUBMIT */
+  function submitWastageCart() {
     let code = document.getElementById('wasteStaffCode').value.toString().trim();
     let staffName = staffCodes[code];
-
-    if(!itemObj || !qty || !selectedUnit || !reason) { alert('Please complete all fields!'); return; }
     if(!staffName) { alert('Staff Verification Code Incorrect!'); return; }
+    if(wastageCart.length === 0) { alert('Your current wastage list is empty!'); return; }
 
     document.getElementById('wasteSubmitBtn').disabled = true;
 
-    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "wastage", item: itemObj.name, qty: qty, unit: selectedUnit, reason: reason, staffName: staffName }) })
-    .then(res => res.json())
+    let promises = wastageCart.map(item => {
+      return fetch(API_URL, { 
+        method: "POST", 
+        body: JSON.stringify({ action: "wastage", item: item.name, qty: item.qty, unit: item.unit, reason: item.reason, staffName: staffName }) 
+      });
+    });
+
+    Promise.all(promises)
     .then(() => {
-      alert('Wastage logged successfully!');
-      document.getElementById('wasteSearch').value = '';
-      document.getElementById('wasteQty').value = '';
-      document.getElementById('wasteUnit').innerHTML = '<option value="">-- Choose First --</option>';
-      document.getElementById('wasteReason').value = '';
+      alert('All wastage items logged successfully!');
+      wastageCart = [];
+      document.getElementById('wasteCartBody').innerHTML = '<tr><td colspan="4" class="text-muted text-center">No items added yet.</td></tr>';
       document.getElementById('wasteStaffCode').value = '';
-      activeSelections['wastage'] = null;
       document.getElementById('wasteSubmitBtn').disabled = false;
       loadWasteHistory();
     }).catch(() => { alert("Submission Error."); document.getElementById('wasteSubmitBtn').disabled = false; });
@@ -542,7 +636,6 @@
       tbody.innerHTML = '';
       if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No records for this month.</td></tr>'; return; }
       
-      // প্রোডাকশন লগের অলওয়েজ নিউয়েস্ট ফার্স্ট সর্টিং লজিক
       data.sort((a, b) => (b.timestamp || new Date(b.rawDate || b.date).getTime()) - (a.timestamp || new Date(a.rawDate || a.date).getTime()));
       
       data.forEach(r => {
@@ -558,7 +651,6 @@
       tbody.innerHTML = '';
       if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No records for this month.</td></tr>'; return; }
       
-      // ওয়েস্টেজ লগের অলওয়েজ নিউয়েস্ট ফার্স্ট সর্টিং লজিক
       data.sort((a, b) => (b.timestamp || new Date(b.rawDate || b.date).getTime()) - (a.timestamp || new Date(a.rawDate || a.date).getTime()));
       
       data.forEach(r => {
@@ -572,7 +664,6 @@
     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Fetching records...</td></tr>';
     fetch(API_URL + "?action=getHistory").then(res => res.json()).then(data => {
       
-      // 🚀 গ্লোবাল নিউয়েস্ট টু ওল্ডেস্ট ক্রোনোলজিক্যাল সর্টিং লজিক (যা মাস ও বছর ব্যাপী কাজ করবে)
       historyData = (data || []).sort((a, b) => {
         let timeA = a.timestamp || new Date(a.rawDate || a.date).getTime();
         let timeB = b.timestamp || new Date(b.rawDate || b.date).getTime();
