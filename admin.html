@@ -12,7 +12,7 @@
       --goya-dark: #1f4e78;
       --goya-accent: #153552;
     }
-    body { background-color: var(--goya-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; overflow-x: hidden; }
+    body { background-color: var(--goya-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #33; overflow-x: hidden; }
     
     /* 🔒 PIN GATE STYLING */
     .gate-container { max-width: 420px; margin: 120px auto; background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; border: 1px solid rgba(0,0,0,0.05); }
@@ -84,7 +84,7 @@
       </div>
 
       <div class="col-md-9 col-lg-10 main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
           <div>
             <h2 class="fw-bold m-0" style="color: #2c3e50;">Live Submission Control</h2>
             <p class="text-muted m-0 small">Override states and map received timelines directly to the spreadsheet grid.</p>
@@ -92,6 +92,35 @@
           <button class="btn btn-white border bg-white shadow-sm fw-bold px-3 py-2" onclick="loadAdminHistory()">
             <i class="bi bi-arrow-clockwise me-1"></i> Refresh Grid
           </button>
+        </div>
+
+        <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
+          <div class="row g-2">
+            <div class="col-md-3 col-6">
+              <label class="form-label fw-bold text-secondary mb-1">📅 Filter by Date</label>
+              <input type="date" id="filterDate" class="form-control form-control-sm" onchange="applyAdminFilters()">
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label fw-bold text-secondary mb-1">📦 Filter by Supplier</label>
+              <select id="filterSupplier" class="form-select form-select-sm" onchange="applyAdminFilters()">
+                <option value="">All Suppliers</option>
+              </select>
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label fw-bold text-secondary mb-1">⏳ Filter by Current State</label>
+              <select id="filterStatus" class="form-select form-select-sm" onchange="applyAdminFilters()">
+                <option value="">All Status</option>
+                <option value="PENDING">PENDING</option>
+                <option value="ORDERED">ORDERED</option>
+                <option value="RECEIVED">RECEIVED</option>
+                <option value="NOT RECEIVED">NOT RECEIVED</option>
+              </select>
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label fw-bold text-secondary mb-1">✅ Filter by Received Date</label>
+              <input type="date" id="filterReceivedDate" class="form-control form-control-sm" onchange="applyAdminFilters()">
+            </div>
+          </div>
         </div>
 
         <div class="data-card">
@@ -122,9 +151,9 @@
   </div>
 
   <script>
-    // 🔗 আপনার অরিজিনাল মেইন স্ক্রিপ্ট API ইউআরএল
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxA04ds9skuy0ljcoIA76Sj_lfVU7XkZ5heR9dc7seXuVAWFd1T5Jc8vTT7luMucKCJNw/exec";
     const MASTER_ADMIN_PIN = "3898"; 
+    let adminHistoryData = [];
 
     function triggerToast(msg) {
       const toast = document.getElementById("toastAlert");
@@ -151,54 +180,92 @@
       fetch(`${WEB_APP_URL}?action=getHistory`)
         .then(res => res.json())
         .then(data => {
-          if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-muted p-4">No logged items inside spreadsheet cells.</td></tr>`;
-            return;
-          }
-          tbody.innerHTML = "";
-          data.forEach((row, index) => {
-            const tr = document.createElement("tr");
-            
-            let statusClass = "badge-pending";
-            if(row.status.toUpperCase() === "ORDERED") statusClass = "badge-ordered";
-            if(row.status.toUpperCase() === "RECEIVED") statusClass = "badge-received";
-            if(row.status.toUpperCase() === "NOT RECEIVED") statusClass = "badge-notreceived";
-
-            // সোর্স ফিক্স: বাম পাশে ভুল কোড প্রিন্ট হওয়া চিরতরে বন্ধ করার প্রফেশনাল মেথড
-            tr.innerHTML = `
-              <td><span class="text-muted font-monospace small">${row.date}</span></td>
-              <td class="fw-bold text-start text-dark">${row.item}</td>
-              <td><span class="badge bg-light text-dark fs-6 border">${row.qty} ${row.unit}</span></td>
-              <td><span class="badge bg-secondary px-2 py-1">${row.supplier}</span></td>
-              <td><span class="badge-status ${statusClass}">${row.status}</span></td>
-              <td>
-                <select id="status_${index}" class="form-select form-select-sm fw-bold" onchange="toggleDateInput(${index})">
-                  <option value="PENDING" ${row.status.toUpperCase()==="PENDING"?"selected":""}>PENDING</option>
-                  <option value="ORDERED" ${row.status.toUpperCase()==="ORDERED"?"selected":""}>ORDERED</option>
-                  <option value="RECEIVED" ${row.status.toUpperCase()==="RECEIVED"?"selected":""}>RECEIVED</option>
-                  <option value="NOT RECEIVED" ${row.status.toUpperCase()==="NOT RECEIVED"?"selected":""}>NOT RECEIVED</option>
-                </select>
-              </td>
-              <td>
-                <input type="date" id="date_${index}" class="form-control form-control-sm text-center" 
-                  value="${row.receivedDate ? row.receivedDate : ""}" 
-                  ${row.status.toUpperCase() !== "RECEIVED" ? "disabled" : ""}>
-              </td>
-              <td>
-                <input type="text" id="remarks_${index}" class="form-control form-control-sm" placeholder="Manager Notes" value="${row.remarks || ''}">
-              </td>
-              <td>
-                <button class="btn-save shadow-sm" onclick="updateRowState(${index}, '${row.rawDate}', '${btoa(unescape(encodeURIComponent(row.item)))}', ${row.qty})">
-                  <i class="bi bi-check-circle-fill"></i>
-                </button>
-              </td>
-            `;
-            tbody.appendChild(tr);
+          // 🚀 নিউয়েস্ট টু ওল্ডেস্ট গ্লোবাল ক্রোনোলজিক্যাল সর্টিং লজিক
+          adminHistoryData = (data || []).sort((a, b) => {
+            let timeA = a.timestamp || new Date(a.rawDate || a.date).getTime();
+            let timeB = b.timestamp || new Date(b.rawDate || b.date).getTime();
+            return timeB - timeA;
           });
+
+          // সাপ্লায়ার ড্রপডাউন ডায়নামিক পপুলেট করা
+          let supplierSelect = document.getElementById('filterSupplier');
+          supplierSelect.innerHTML = '<option value="">All Suppliers</option>';
+          let uniqueSuppliers = [...new Set(adminHistoryData.map(r => r.supplier).filter(Boolean))];
+          uniqueSuppliers.forEach(sup => {
+            let opt = document.createElement('option'); opt.value = sup; opt.text = sup; supplierSelect.appendChild(opt);
+          });
+
+          applyAdminFilters();
         })
         .catch(err => {
           tbody.innerHTML = `<tr><td colspan="9" class="text-danger p-4">Architecture Fetch Blocked. Verify active parameters.</td></tr>`;
         });
+    }
+
+    function applyAdminFilters() {
+      let fDate = document.getElementById('filterDate').value;
+      let fSupplier = document.getElementById('filterSupplier').value;
+      let fStatus = document.getElementById('filterStatus').value.toUpperCase();
+      let fRecDate = document.getElementById('filterReceivedDate').value;
+
+      let filtered = adminHistoryData.filter(row => {
+        let matchDate = fDate ? row.rawDate === fDate : true;
+        let matchSupplier = fSupplier ? row.supplier === fSupplier : true;
+        let matchStatus = fStatus ? row.status.toUpperCase() === fStatus : true;
+        let matchRecDate = fRecDate ? row.receivedDate === fRecDate : true;
+        return matchDate && matchSupplier && matchStatus && matchRecDate;
+      });
+
+      renderAdminTable(filtered);
+    }
+
+    function renderAdminTable(data) {
+      const tbody = document.getElementById("adminOrderTableBody");
+      tbody.innerHTML = "";
+      
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-muted p-4">No matching records found inside spreadsheet logs.</td></tr>`;
+        return;
+      }
+
+      data.forEach((row, index) => {
+        const tr = document.createElement("tr");
+        
+        let statusClass = "badge-pending";
+        if(row.status.toUpperCase() === "ORDERED") statusClass = "badge-ordered";
+        if(row.status.toUpperCase() === "RECEIVED") statusClass = "badge-received";
+        if(row.status.toUpperCase() === "NOT RECEIVED") statusClass = "badge-notreceived";
+
+        tr.innerHTML = `
+          <td><span class="text-muted font-monospace small">${row.date}</span></td>
+          <td class="fw-bold text-start text-dark">${row.item}</td>
+          <td><span class="badge bg-light text-dark fs-6 border">${row.qty} ${row.unit}</span></td>
+          <td><span class="badge bg-secondary px-2 py-1">${row.supplier}</span></td>
+          <td><span class="badge-status ${statusClass}">${row.status}</span></td>
+          <td>
+            <select id="status_${index}" class="form-select form-select-sm fw-bold" onchange="toggleDateInput(${index})">
+              <option value="PENDING" ${row.status.toUpperCase()==="PENDING"?"selected":""}>PENDING</option>
+              <option value="ORDERED" ${row.status.toUpperCase()==="ORDERED"?"selected":""}>ORDERED</option>
+              <option value="RECEIVED" ${row.status.toUpperCase()==="RECEIVED"?"selected":""}>RECEIVED</option>
+              <option value="NOT RECEIVED" ${row.status.toUpperCase()==="NOT RECEIVED"?"selected":""}>NOT RECEIVED</option>
+            </select>
+          </td>
+          <td>
+            <input type="date" id="date_${index}" class="form-control form-control-sm text-center" 
+              value="${row.receivedDate ? row.receivedDate : ""}" 
+              ${row.status.toUpperCase() !== "RECEIVED" ? "disabled" : ""}>
+          </td>
+          <td>
+            <input type="text" id="remarks_${index}" class="form-control form-control-sm" placeholder="Manager Notes" value="${row.remarks || ''}">
+          </td>
+          <td>
+            <button class="btn-save shadow-sm" onclick="updateRowState(${index}, '${row.rawDate}', '${btoa(unescape(encodeURIComponent(row.item)))}', ${row.qty})">
+              <i class="bi bi-check-circle-fill"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function toggleDateInput(index) {
