@@ -38,7 +38,7 @@
     .btn-save { background-color: var(--goya-dark); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; transition: all 0.2s; }
     .btn-save:hover { background-color: var(--goya-accent); }
     
-    .nav-custom .nav-link { color: #555; font-weight: 600; border-radius: 8px; padding: 10px 15px; margin-bottom: 5px; text-align: left; transition: all 0.2s; }
+    .nav-custom .nav-link { color: #555; font-weight: 600; border-radius: 8px; padding: 10px 15px; margin-bottom: 5px; text-align: left; transition: all 0.2s; width: 100%; }
     .nav-custom .nav-link.active { background-color: var(--goya-dark) !important; color: white !important; }
     .nav-custom .nav-link:hover:not(.active) { background-color: #f1f3f5; color: var(--goya-dark); }
     
@@ -47,7 +47,6 @@
 </head>
 <body>
 
-  <!-- LIVE TOAST ALERTS -->
   <div id="toastAlert" class="alert alert-dark shadow-lg text-white bg-dark border-0 align-items-center" role="alert">
     <div class="d-flex p-2">
       <i class="bi bi-info-circle-fill me-2"></i>
@@ -55,7 +54,6 @@
     </div>
   </div>
 
-  <!-- SECURITY GATE -->
   <div id="pinGate" class="gate-container">
     <div class="gate-icon"><i class="bi bi-shield-lock-fill"></i></div>
     <h4 class="fw-bold mb-2">GOYA CORE ADMINISTRATION</h4>
@@ -67,11 +65,9 @@
     <p id="gateError" class="text-danger mt-3 small d-none"><i class="bi bi-exclamation-triangle-fill"></i> Access Denied. Invalid PIN.</p>
   </div>
 
-  <!-- CONTROL CONSOLE LAYOUT -->
   <div id="adminPanel" class="container-fluid d-none">
     <div class="row">
       
-      <!-- FIXED LEFT CONSOLE SIDEBAR -->
       <div class="col-md-3 col-lg-2 sidebar">
         <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
           <i class="bi bi-cpu-fill text-primary fs-4 me-2"></i>
@@ -79,10 +75,12 @@
         </div>
         <p class="text-muted small text-transform uppercase fw-bold mb-2">Operational Controls</p>
         
-        <div class="nav flex-column nav-pills nav-custom" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-          <button class="nav-link active" id="tab-orders-btn" data-bs-toggle="pill" onclick="switchActiveTab('orders')"><i class="bi bi-cart-check me-2"></i> Orders Overrider</button>
-          <button class="nav-link" id="tab-production-btn" data-bs-toggle="pill" onclick="switchActiveTab('production')"><i class="bi bi-soup-bowl me-2"></i> Foodics Production</button>
-          <button class="nav-link" id="tab-wastage-btn" data-bs-toggle="pill" onclick="switchActiveTab('wastage')"><i class="bi bi-trash3 me-2"></i> Foodics Wastage</button>
+        <div class="nav flex-column nav-pills nav-custom" id="v-pills-tab" role="tablist">
+          <button class="nav-link active" onclick="switchActiveTab('orders')"><i class="bi bi-cart-check me-2"></i> Orders Overrider</button>
+          <button class="nav-link" onclick="switchActiveTab('master-items')"><i class="bi bi-box-seam me-2"></i> Master Items Manager</button>
+          <button class="nav-link" onclick="switchActiveTab('staff-dir')"><i class="bi bi-people me-2"></i> Staff Directory</button>
+          <button class="nav-link" onclick="switchActiveTab('production')"><i class="bi bi-soup-bowl me-2"></i> Foodics Production</button>
+          <button class="nav-link" onclick="switchActiveTab('wastage')"><i class="bi bi-trash3 me-2"></i> Foodics Wastage</button>
         </div>
 
         <div class="pt-4 mt-4 border-top">
@@ -90,10 +88,8 @@
         </div>
       </div>
 
-      <!-- INTERACTIVE DATA SCREEN -->
       <div class="col-md-9 col-lg-10 main-content">
         
-        <!-- SECTION 1: LIVE ORDERS OVERRIDER -->
         <div id="panel-orders" class="admin-tab-content">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
@@ -103,7 +99,6 @@
             <button class="btn btn-white border bg-white shadow-sm fw-bold btn-sm px-3 py-2" onclick="loadDataGrid('orders')"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
           </div>
 
-          <!-- FILTERS FOR ORDERS -->
           <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
             <div class="row g-2">
               <div class="col-md-3 col-6"><label class="form-label fw-bold text-secondary mb-1">📅 Order Date</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
@@ -121,7 +116,46 @@
           </table></div></div>
         </div>
 
-        <!-- SECTION 2: PRODUCTION FOODICS TRACKER -->
+        <div id="panel-master-items" class="admin-tab-content d-none">
+          <h2 class="fw-bold text-dark mb-1">Master Items Manager</h2>
+          <p class="text-muted small mb-4">Directly append new product lines to the Master_Items sheet grid.</p>
+          
+          <div class="card p-4 bg-white border shadow-sm rounded-3 mb-4" style="max-width: 600px;">
+            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-plus-circle-fill me-1"></i> Add New Product Item</h5>
+            <div class="mb-3">
+              <label class="form-label">Item Name</label>
+              <input type="text" id="newMasterItemName" class="form-control" placeholder="e.g. Acai Puree 1KG">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Supplier Name</label>
+              <input type="text" id="newMasterItemSupplier" class="form-control" placeholder="e.g. Amazonas4u / Internal">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Units (Comma separated if multiple)</label>
+              <input type="text" id="newMasterItemUnit" class="form-control" placeholder="e.g. PCS, KG, BOX">
+            </div>
+            <button class="btn btn-primary w-100 fw-bold" onclick="submitNewMasterItem()">🚀 Add Product Line</button>
+          </div>
+        </div>
+
+        <div id="panel-staff-dir" class="admin-tab-content d-none">
+          <h2 class="fw-bold text-dark mb-1">Staff Directory Portal</h2>
+          <p class="text-muted small mb-4">Authorize or append new staff identities and unique login codes.</p>
+          
+          <div class="card p-4 bg-white border shadow-sm rounded-3 mb-4" style="max-width: 600px;">
+            <h5 class="fw-bold mb-3 text-success"><i class="bi bi-person-plus-fill me-1"></i> Register New Staff Profile</h5>
+            <div class="mb-3">
+              <label class="form-label">Secret PIN Code</label>
+              <input type="number" id="newStaffCode" class="form-control text-center fw-bold" placeholder="e.g. 1234" style="letter-spacing:3px;">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Full Staff Name</label>
+              <input type="text" id="newStaffName" class="form-control" placeholder="e.g. Obama / Goalde">
+            </div>
+            <button class="btn btn-success w-100 fw-bold" onclick="submitNewStaff()">🔑 Issue Staff Credentials</button>
+          </div>
+        </div>
+
         <div id="panel-production" class="admin-tab-content d-none">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
@@ -131,7 +165,6 @@
             <button class="btn btn-white border bg-white shadow-sm fw-bold btn-sm px-3 py-2" onclick="loadDataGrid('production')"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
           </div>
 
-          <!-- FILTERS FOR PRODUCTION -->
           <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
             <div class="row g-2">
               <div class="col-md-4 col-6"><label class="form-label fw-bold text-secondary mb-1">📅 Filter by Prep Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
@@ -148,7 +181,6 @@
           </table></div></div>
         </div>
 
-        <!-- SECTION 3: WASTAGE FOODICS TRACKER -->
         <div id="panel-wastage" class="admin-tab-content d-none">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
@@ -158,7 +190,6 @@
             <button class="btn btn-white border bg-white shadow-sm fw-bold btn-sm px-3 py-2" onclick="loadDataGrid('wastage')"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
           </div>
 
-          <!-- FILTERS FOR WASTAGE -->
           <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
             <div class="row g-2">
               <div class="col-md-4 col-6"><label class="form-label fw-bold text-secondary mb-1">📅 Filter by Waste Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
@@ -180,8 +211,7 @@
   </div>
 
   <script>
-    // 💡 আপনার দেওয়া চ্যাট ক্রাইটেরিয়া ইউআরএল বসাবেন নিচে 
-    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbxJWf99URBsoEwl9gHEEgaWO4d3MfMa0syvIO_xF0OqU2ekc3wyxyVaM9ybVEPxgAr6HQ/exec";
+    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbxCvTcId4zaiWU6bkQB-dPq4wKdqLgnWsMFggsyfvmhkLvh6hcCaOTK8T7t29cI0Ky5vA/exec";
     const MASTER_PIN = "9988";
     
     let dbOrders = [], dbProduction = [], dbWastage = [];
@@ -205,8 +235,14 @@
 
     function switchActiveTab(target) {
       document.querySelectorAll(".admin-tab-content").forEach(el => el.classList.add("d-none"));
+      document.querySelectorAll(".nav-custom .nav-link").forEach(el => el.classList.remove("active"));
+      
       document.getElementById(`panel-${target}`).classList.remove("d-none");
-      loadDataGrid(target);
+      event.currentTarget.classList.add("active");
+      
+      if(target === 'orders' || target === 'production' || target === 'wastage') {
+        loadDataGrid(target);
+      }
     }
 
     function loadDataGrid(mode) {
@@ -373,7 +409,7 @@
 
     function commitProdStatus(i, rawDate, base64Item) {
       let payload = {
-        action: "adminUpdateProductionStatus" || "adminUpdateProdStatus", // অ্যাপস স্ক্রিপ্ট ম্যাচিং মেথড
+        action: "adminUpdateProductionStatus",
         rawDate: rawDate,
         itemName: decodeURIComponent(escape(atob(base64Item))),
         status: document.getElementById(`prod_status_${i}`).value
@@ -411,7 +447,7 @@
 
     function commitWasteStatus(i, rawDate, base64Item) {
       let payload = {
-        action: "adminUpdateWastageStatus" || "adminUpdateWasteStatus", // অ্যাপস স্ক্রিপ্ট ম্যাচিং মেথড
+        action: "adminUpdateWastageStatus",
         rawDate: rawDate,
         itemName: decodeURIComponent(escape(atob(base64Item))),
         status: document.getElementById(`waste_status_${i}`).value
@@ -419,6 +455,46 @@
       triggerToast("Updating Wastage Sync Check State...");
       fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
         if(d.status === "Success") { triggerToast("Wastage Backlog Checked!"); loadDataGrid('wastage'); }
+      });
+    }
+
+    /* SUBMIT NEW MASTER ITEM TO DATABASE */
+    function submitNewMasterItem() {
+      let name = document.getElementById("newMasterItemName").value.trim();
+      let supplier = document.getElementById("newMasterItemSupplier").value.trim();
+      let unit = document.getElementById("newMasterItemUnit").value.trim();
+      
+      if(!name || !supplier || !unit) { alert("Please input all item parameters!"); return; }
+      
+      let payload = { action: "adminAddMasterItem", name: name, supplier: supplier, unit: unit };
+      triggerToast("Appending new product row inside Master_Items sheet...");
+      
+      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
+        if(d.status === "Success") {
+          triggerToast("Product Line added to Google Sheet!");
+          document.getElementById("newMasterItemName").value = "";
+          document.getElementById("newMasterItemSupplier").value = "";
+          document.getElementById("newMasterItemUnit").value = "";
+        }
+      });
+    }
+
+    /* SUBMIT NEW STAFF REGISTRATION TO DATABASE */
+    function submitNewStaff() {
+      let code = document.getElementById("newStaffCode").value.toString().trim();
+      let name = document.getElementById("newStaffName").value.trim();
+      
+      if(!code || !name) { alert("Please enter secret pin code and full staff name!"); return; }
+      
+      let payload = { action: "adminAddStaff", code: code, name: name };
+      triggerToast("Registering new profile inside Staff_Codes sheet...");
+      
+      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
+        if(d.status === "Success") {
+          triggerToast("Staff PIN Activated successfully!");
+          document.getElementById("newStaffCode").value = "";
+          document.getElementById("newStaffName").value = "";
+        }
       });
     }
   </script>
