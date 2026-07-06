@@ -12,7 +12,6 @@
     
     .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
     
-    /* Responsive Navigation Layout */
     .top-navbar { background-color: var(--goya-dark); color: white; display: none; padding: 12px 20px; align-items: center; justify-content: space-between; }
     .sidebar { background-color: white; min-height: 100vh; padding: 25px 15px; box-shadow: 4px 0 15px rgba(0,0,0,0.02); }
     .main-content { padding: 30px; }
@@ -27,10 +26,11 @@
     
     .editable-cell { cursor: pointer; background-color: #fffde7; font-weight: 500; transition: background 0.2s; }
     .editable-cell:hover { background-color: #fff9c4; }
-    .cell-input { width: 100%; border: 1px solid var(--goya-dark); border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; }
+    .cell-input, .cell-select { width: 100%; border: 1px solid var(--goya-dark); border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; }
     
     .badge-status { padding: 4px 8px; border-radius: 30px; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; }
     .badge-pending { background-color: #fee2e2; color: #991b1b; }
+    .badge-ordered { background-color: #fef3c7; color: #92400e; }
     .badge-received { background-color: #d1fae5; color: #065f46; }
     
     #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
@@ -56,7 +56,7 @@
     <div class="d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i><div id="toastMessage">Sync Mode Engine Active.</div></div>
   </div>
 
-  <!-- GATE -->
+  <!-- SECURITY GATE -->
   <div id="pinGate" class="gate-container">
     <div class="fs-1 text-primary mb-2"><i class="bi bi-shield-lock-fill"></i></div>
     <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
@@ -65,7 +65,7 @@
     <p id="gateError" class="text-danger mt-2 small d-none">Invalid Encryption PIN.</p>
   </div>
 
-  <!-- WORKSPACE -->
+  <!-- WORKSPACE LAYOUT -->
   <div id="adminPanel" class="container-fluid d-none">
     <div class="row">
       
@@ -84,7 +84,7 @@
         <button class="btn btn-sm btn-danger w-100 mt-5" onclick="location.reload()">Lock Console</button>
       </div>
 
-      <!-- INTERACTIVE STAGE -->
+      <!-- MAIN CONTROL INTERFACE -->
       <div class="col-md-9 col-lg-10 main-content">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 g-2">
           <h3 id="stageTitle" class="fw-bold m-0 text-dark">Orders Overrider Panel</h3>
@@ -94,16 +94,18 @@
           </div>
         </div>
 
-        <!-- TAB 1: ORDERS OVERRIDER VIEW -->
+        <!-- TAB 1: ORDERS OVERRIDER PANEL WITH FILTERS -->
         <div id="panel-orders" class="admin-tab-content">
           <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
-              <div class="col-md-3 col-6"><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
-              <div class="col-md-3 col-6"><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
-              <div class="col-md-3 col-6">
-                <div class="form-check form-switch m-0 pt-1">
+              <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
+              <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📦 Supplier</label><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
+              <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">⏳ Current State</label><select id="ordFilterState" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="ORDERED">ORDERED</option><option value="RECEIVED">RECEIVED</option><option value="NOT RECEIVED">NOT RECEIVED</option></select></div>
+              <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">🔍 Item Search</label><input type="text" id="ordFilterSearch" class="form-control form-control-sm" placeholder="Search item..." oninput="applyFilters('orders')"></div>
+              <div class="col-md-2 col-12 text-md-center">
+                <div class="form-check form-switch d-inline-block m-0 mt-3">
                   <input class="form-check-input" type="checkbox" id="ordPendingToggle" onchange="applyFilters('orders')">
-                  <label class="form-check-label fw-bold text-danger" for="ordPendingToggle">⚠️ Show Pending Only</label>
+                  <label class="form-check-label fw-bold text-danger" for="ordPendingToggle">Show Pending Only</label>
                 </div>
               </div>
             </div>
@@ -116,7 +118,7 @@
           </table></div></div>
         </div>
 
-        <!-- TAB 2: MASTER ITEMS INTERACTIVE MANAGER -->
+        <!-- TAB 2: MASTER ITEMS MANAGER -->
         <div id="panel-master-items" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
@@ -125,7 +127,7 @@
             </div>
           </div>
           <div class="data-card">
-            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click any text cell below to edit directly. Hit "Save All Changes" on top when done.</p>
+            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click text to edit. Supplier column provides dropdown mapping. Hit "Save All Changes" on top when done.</p>
             <div class="table-responsive" style="max-height: 550px;"><table class="table table-hover table-bordered table-striped mb-0">
               <thead class="sticky-top"><tr><th>#</th><th class="text-start">Item Name</th><th>Supplier Name</th><th>Units Pattern</th><th>Action</th></tr></thead>
               <tbody id="masterItemsTableBody"><tr><td colspan="5" class="text-muted p-4">Awaiting grid synchronization...</td></tr></tbody>
@@ -133,11 +135,11 @@
           </div>
         </div>
 
-        <!-- TAB 3: STAFF DIRECTORY INTERACTIVE MANAGER -->
+        <!-- TAB 3: STAFF DIRECTORY -->
         <div id="panel-staff-dir" class="admin-tab-content d-none">
           <div class="text-end mb-3"><button class="btn btn-success btn-sm fw-bold" onclick="addNewStaffRowToGrid()">+ Inject New Staff Profile</button></div>
           <div class="data-card">
-            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click code or name cells below to update parameters directly.</p>
+            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click cells below to update parameters directly.</p>
             <div class="table-responsive"><table class="table table-hover table-bordered table-striped mb-0">
               <thead><tr><th>Secret Login PIN</th><th>Staff Identity Label</th><th>Action</th></tr></thead>
               <tbody id="staffTableBody"><tr><td colspan="3" class="text-muted p-4">Awaiting access grid...</td></tr></tbody>
@@ -145,11 +147,12 @@
           </div>
         </div>
 
-        <!-- TAB 4 & 5: PRODUCTION AND WASTAGE CONTROL PANEL -->
+        <!-- TAB 4: PRODUCTION FOODICS CHECKLIST -->
         <div id="panel-production" class="admin-tab-content d-none">
-          <div class="card p-2 bg-white border mb-3"><div class="row g-2">
-            <div class="col-md-6"><input type="text" id="prodSearch" class="form-control form-control-sm" placeholder="🔍 Search production items..." oninput="applyFilters('production')"></div>
-            <div class="col-md-6"><select id="prodStatusFilter" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All State</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+          <div class="card p-3 bg-white border mb-3"><div class="row g-2">
+            <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
+            <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">⏳ Sync State</label><select id="prodStatusFilter" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+            <div class="col-md-4 col-12"><label class="fw-bold text-secondary mb-1">🔍 Search Prep Item</label><input type="text" id="prodSearch" class="form-control form-control-sm" placeholder="Search production items..." oninput="applyFilters('production')"></div>
           </div></div>
           <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
             <thead><tr><th>Prep Date & Time</th><th class="text-start">Prep Item</th><th>Quantity</th><th>Unit</th><th>Submitted By</th><th>Sync State</th></tr></thead>
@@ -157,10 +160,12 @@
           </table></div></div>
         </div>
 
+        <!-- TAB 5: WASTAGE FOODICS CHECKLIST -->
         <div id="panel-wastage" class="admin-tab-content d-none">
-          <div class="card p-2 bg-white border mb-3"><div class="row g-2">
-            <div class="col-md-6"><input type="text" id="wasteSearch" class="form-control form-control-sm" placeholder="🔍 Search wastage items..." oninput="applyFilters('wastage')"></div>
-            <div class="col-md-6"><select id="wasteStatusFilter" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All State</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+          <div class="card p-3 bg-white border mb-3"><div class="row g-2">
+            <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
+            <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">⏳ Sync State</label><select id="wasteStatusFilter" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+            <div class="col-md-4 col-12"><label class="fw-bold text-secondary mb-1">🔍 Search Waste Item</label><input type="text" id="wasteSearch" class="form-control form-control-sm" placeholder="Search wastage items..." oninput="applyFilters('wastage')"></div>
           </div></div>
           <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
             <thead><tr><th>Waste Date & Time</th><th class="text-start">Item Name</th><th>Quantity</th><th>Unit</th><th>Reason</th><th>Logged By</th><th>Sync State</th></tr></thead>
@@ -174,9 +179,10 @@
 
   <script>
     const CORE_API_URL = "https://script.google.com/macros/s/AKfycbwOcyFSZL8fr5YDD9hsboZaLRyrJlrKUoiXlmi5GqBhommvz2lF8YdwRG0eGIz-yCBLiw/exec";
-    const MASTER_PIN = "9988";
+    const MASTER_PIN = "3898";
     
     let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
+    let uniqueSuppliersList = [];
     let currentTab = 'orders';
 
     function triggerToast(msg) {
@@ -194,13 +200,25 @@
     }
 
     function toggleMobileSidebar() { document.getElementById("sidebarMenu").classList.toggle("open"); }
+    
     function toggleCellToEdit(cell) {
-      if (cell.querySelector('input')) return;
+      if (cell.querySelector('input') || cell.querySelector('select')) return;
       let currentVal = cell.innerText.trim();
       cell.innerHTML = `<input type="text" class="cell-input" value="${currentVal}" onblur="closeCellEdit(this)" onkeydown="if(event.key==='Enter') this.blur()">`;
       cell.querySelector('input').focus();
     }
+    
+    // 📦 সাপ্লায়ার এডিটের জন্য ডায়নামিক ড্রপডাউন জেনারেটর মেথড
+    function toggleSupplierDropdownEdit(cell) {
+      if (cell.querySelector('select') || cell.querySelector('input')) return;
+      let currentVal = cell.innerText.trim();
+      let optionsHtml = uniqueSuppliersList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
+      cell.innerHTML = `<select class="cell-select" onblur="closeCellSelect(this)" onchange="closeCellSelect(this)">${optionsHtml}</select>`;
+      cell.querySelector('select').focus();
+    }
+
     function closeCellEdit(input) { let val = input.value.trim(); let p = input.parentElement; p.innerText = val || "-"; }
+    function closeCellSelect(select) { let val = select.value; let p = select.parentElement; p.innerText = val || "-"; }
 
     function switchActiveTab(target) {
       currentTab = target;
@@ -221,7 +239,13 @@
         document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
         fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; populateSupplierFilter(data); applyFilters('orders'); });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
-        fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { dbMasterItems = data.items; dbStaffList = data.staffList; renderMasterItemsGrid(dbMasterItems); renderStaffGrid(dbStaffList); });
+        fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { 
+          dbMasterItems = data.items; 
+          dbStaffList = data.staffList; 
+          uniqueSuppliersList = [...new Set(dbMasterItems.map(i => i.supplier).filter(Boolean))];
+          renderMasterItemsGrid(dbMasterItems); 
+          renderStaffGrid(dbStaffList); 
+        });
       } else if (currentTab === 'production') {
         fetch(`${CORE_API_URL}?action=getProdHistory`).then(res => res.json()).then(data => { dbProduction = data; applyFilters('production'); });
       } else if (currentTab === 'wastage') {
@@ -239,26 +263,49 @@
       if (mode === 'orders') {
         let fDate = document.getElementById('ordFilterDate').value;
         let fSup = document.getElementById('ordFilterSupplier').value;
+        let fState = document.getElementById('ordFilterState').value.toUpperCase();
+        let fSearch = document.getElementById('ordFilterSearch').value.toLowerCase();
         let fPending = document.getElementById('ordPendingToggle').checked;
+        
         let filtered = dbOrders.filter(row => {
-          return (!fDate || row.rawDate === fDate) && (!fSup || row.supplier === fSup) && (!fPending || row.status.toUpperCase() === "PENDING");
+          return (!fDate || row.rawDate === fDate) && 
+                 (!fSup || row.supplier === fSup) && 
+                 (!fState || row.status.toUpperCase() === fState) &&
+                 (!fSearch || row.item.toLowerCase().includes(fSearch)) &&
+                 (!fPending || row.status.toUpperCase() === "PENDING");
         });
         renderOrdersTable(filtered);
       } else if (mode === 'production') {
+        let fDate = document.getElementById('prodFilterDate').value;
         let search = document.getElementById("prodSearch").value.toLowerCase();
-        let stat = document.getElementById("prodStatusFilter").value;
-        let filtered = dbProduction.filter(r => (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status === stat));
+        let stat = document.getElementById("prodStatusFilter").value.toUpperCase();
+        
+        let filtered = dbProduction.filter(r => {
+          let rowIsoDate = r.timestamp ? new Date(r.timestamp).toISOString().split('T')[0] : "";
+          return (!fDate || rowIsoDate === fDate) &&
+                 (!search || r.item.toLowerCase().includes(search)) && 
+                 (!stat || r.status.toUpperCase() === stat);
+        });
+        
         let tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
         filtered.forEach((row, i) => {
-          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-prod" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select id="p_stat_${i}" class="form-select form-select-sm"><option value="PENDING" ${row.status==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-prod" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select id="p_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
         });
       } else if (mode === 'wastage') {
+        let fDate = document.getElementById('wasteFilterDate').value;
         let search = document.getElementById("wasteSearch").value.toLowerCase();
-        let stat = document.getElementById("wasteStatusFilter").value;
-        let filtered = dbWastage.filter(r => (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status === stat));
+        let stat = document.getElementById("wasteStatusFilter").value.toUpperCase();
+        
+        let filtered = dbWastage.filter(r => {
+          let rowIsoDate = r.timestamp ? new Date(r.timestamp).toISOString().split('T')[0] : "";
+          return (!fDate || rowIsoDate === fDate) &&
+                 (!search || r.item.toLowerCase().includes(search)) && 
+                 (!stat || r.status.toUpperCase() === stat);
+        });
+        
         let tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
         filtered.forEach((row, i) => {
-          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-waste" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select id="w_stat_${i}" class="form-select form-select-sm"><option value="PENDING" ${row.status==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-waste" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select id="w_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
         });
       }
     }
@@ -266,15 +313,16 @@
     function renderOrdersTable(data) {
       const tbody = document.getElementById("ordersTableBody"); tbody.innerHTML = "";
       data.forEach((row, i) => {
+        let sClass = row.status.toUpperCase() === 'RECEIVED' ? 'badge-received' : (row.status.toUpperCase() === 'ORDERED' ? 'badge-ordered' : 'badge-pending');
         tbody.innerHTML += `
           <tr class="order-data-row" data-ts="${row.rawDate}" data-name="${row.item}">
             <td><span class="text-muted small">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
-            <td><span class="badge-status ${row.status.toUpperCase()==='RECEIVED'?'badge-received':'badge-pending'}">${row.status}</span></td>
-            <td><select id="o_stat_${i}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(${i})"><option value="PENDING" ${row.status==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${row.status==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${row.status==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${row.status==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
-            <td><input type="date" id="o_date_${i}" class="form-control form-control-sm" value="${row.receivedDate||""}" ${row.status!=='RECEIVED'?'disabled':''}></td>
+            <td><span class="badge-status ${sClass}">${row.status}</span></td>
+            <td><select id="o_stat_${i}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(${i})"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${row.status.toUpperCase()==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${row.status.toUpperCase()==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${row.status.toUpperCase()==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
+            <td><input type="date" id="o_date_${i}" class="form-control form-control-sm" value="${row.receivedDate||""}" ${row.status.toUpperCase()!=='RECEIVED'?'disabled':''}></td>
             <td><input type="text" id="o_rem_${i}" class="form-control form-control-sm" value="${row.remarks||""}"></td>
           </tr>`;
       });
@@ -289,7 +337,7 @@
     function renderMasterItemsGrid(items) {
       const tbody = document.getElementById("masterItemsTableBody"); tbody.innerHTML = "";
       items.forEach((item, i) => {
-        tbody.innerHTML += `<tr><td>${i+1}</td><td class="text-start editable-cell m-item-name" onclick="toggleCellToEdit(this)">${item.name}</td><td class="editable-cell m-item-sup" onclick="toggleCellToEdit(this)">${item.supplier}</td><td class="editable-cell m-item-unit" onclick="toggleCellToEdit(this)">${item.unit}</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td></tr>`;
+        tbody.innerHTML += `<tr><td>${i+1}</td><td class="text-start editable-cell m-item-name" onclick="toggleCellToEdit(this)">${item.name}</td><td class="editable-cell m-item-sup fw-bold text-primary" onclick="toggleSupplierDropdownEdit(this)">${item.supplier}</td><td class="editable-cell m-item-unit" onclick="toggleCellToEdit(this)">${item.unit}</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td></tr>`;
       });
     }
 
@@ -303,7 +351,7 @@
     function addNewItemRowToGrid() {
       const tbody = document.getElementById("masterItemsTableBody");
       let row = document.createElement('tr');
-      row.innerHTML = `<td>+</td><td class="text-start editable-cell m-item-name text-danger" onclick="toggleCellToEdit(this)">New Item</td><td class="editable-cell m-item-sup text-danger" onclick="toggleCellToEdit(this)">Supplier</td><td class="editable-cell m-item-unit text-danger" onclick="toggleCellToEdit(this)">PCS</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td>`;
+      row.innerHTML = `<td>+</td><td class="text-start editable-cell m-item-name text-danger" onclick="toggleCellToEdit(this)">New Item</td><td class="editable-cell m-item-sup text-danger fw-bold" onclick="toggleSupplierDropdownEdit(this)">Supplier</td><td class="editable-cell m-item-unit text-danger" onclick="toggleCellToEdit(this)">PCS</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td>`;
       tbody.prepend(row);
     }
 
@@ -322,7 +370,6 @@
       });
     }
 
-    // 💾 গ্লোবাল ওয়ান-ক্লিক বাল্ক সেভ ট্রান্সমিটার
     function submitGlobalBulkChanges() {
       triggerToast("Engaging Bulk Data Lock Shuttles...");
       
@@ -349,7 +396,7 @@
           let u = tr.querySelector('.m-item-unit') ? tr.querySelector('.m-item-unit').innerText.trim() : "";
           if(n && n !== "-") items.push({ name: n, supplier: s, unit: u });
         });
-        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: items }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("400+ Products Re-Indexed!"); reloadCurrentActiveGrid(); } });
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: items }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Grid Synchronization Complete!"); reloadCurrentActiveGrid(); } });
       } 
       else if (currentTab === 'staff-dir') {
         let staff = [];
@@ -358,9 +405,9 @@
           let n = tr.querySelector('.s-grid-name') ? tr.querySelector('.s-grid-name').innerText.trim() : "";
           if(c && c !== "-") staff.push({ code: c, name: n });
         });
-        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staff }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Access Grid Updated!"); reloadCurrentActiveGrid(); } });
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staff }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Directory Secured!"); reloadCurrentActiveGrid(); } });
       }
     }
   </script>
 </body>
-</html>  
+</html>
