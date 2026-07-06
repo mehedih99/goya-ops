@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
     :root { --goya-bg: #d1d1d3; --goya-dark: #1f4e78; --goya-accent: #153552; }
-    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: #33; min-height: 100vh; }
+    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: #333; min-height: 100vh; }
     
     .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
     .top-navbar { background-color: var(--goya-dark); color: white; display: none; padding: 12px 20px; align-items: center; justify-content: space-between; }
@@ -32,6 +32,8 @@
     .badge-ordered { background-color: #fef3c7; color: #92400e; }
     .badge-received { background-color: #d1fae5; color: #065f46; }
     
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.85rem; }
+    
     #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
     
     @media (max-width: 768px) {
@@ -54,7 +56,6 @@
     <div class="d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i><div id="toastMessage">Sync Mode Engine Active.</div></div>
   </div>
 
-  <!-- SECURITY GATE -->
   <div id="pinGate" class="gate-container">
     <div class="fs-1 text-primary mb-2"><i class="bi bi-shield-lock-fill"></i></div>
     <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
@@ -63,11 +64,9 @@
     <p id="gateError" class="text-danger mt-2 small d-none">Invalid PIN.</p>
   </div>
 
-  <!-- WORKSPACE LAYOUT -->
   <div id="adminPanel" class="container-fluid d-none">
     <div class="row">
       
-      <!-- NAVIGATION SIDEBAR -->
       <div id="sidebarMenu" class="col-md-3 col-lg-2 sidebar">
         <div class="d-none d-md-flex align-items-center mb-4 pb-2 border-bottom">
           <i class="bi bi-cpu-fill text-primary fs-5 me-2"></i><span class="brand-title">GOYA CORE</span>
@@ -82,7 +81,6 @@
         <button class="btn btn-sm btn-danger w-100 mt-5" onclick="location.reload()">Lock Console</button>
       </div>
 
-      <!-- MAIN CONTROL INTERFACE -->
       <div class="col-md-9 col-lg-10 main-content">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 g-2">
           <h3 id="stageTitle" class="fw-bold m-0 text-dark">Orders Overrider Panel</h3>
@@ -92,7 +90,6 @@
           </div>
         </div>
 
-        <!-- TAB 1: ORDERS OVERRIDER PANEL -->
         <div id="panel-orders" class="admin-tab-content">
           <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
@@ -108,32 +105,32 @@
               </div>
             </div>
           </div>
-          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
-            <thead>
-              <tr><th>Submission Date</th><th class="text-start">Item Name</th><th>Quantity</th><th>Supplier</th><th>Current State</th><th>Change Action</th><th>Received Date</th><th>Remarks / Notes</th></tr>
-            </thead>
-            <tbody id="ordersTableBody"><tr><td colspan="8" class="text-muted p-4">Loading operational blocks...</td></tr></tbody>
-          </table></div></div>
+          <div class="data-card">
+            <div class="table-responsive"><table class="table table-hover table-striped mb-0">
+              <thead><tr><th>Submission Date</th><th class="text-start">Item Name</th><th>Quantity</th><th>Supplier</th><th>Current State</th><th>Change Action</th><th>Received Date</th><th>Remarks / Notes</th></tr></thead>
+              <tbody id="ordersTableBody"><tr><td colspan="8" class="text-muted p-4">Loading operational blocks...</td></tr></tbody>
+            </table></div>
+            <div class="pagination-container"><div id="ordersPageInfo" class="text-muted"></div><div id="ordersPaginationBtns" class="btn-group btn-group-sm"></div></div>
+          </div>
         </div>
 
-        <!-- TAB 2: MASTER ITEMS MANAGER -->
         <div id="panel-master-items" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
-              <div class="col-md-8 col-12"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines inside grid..." oninput="filterMasterItemsGrid()"></div>
+              <div class="col-md-8 col-12"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines inside grid..." oninput="applyFilters('master-items')"></div>
               <div class="col-md-4 col-12 text-end"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Inject New Item Row</button></div>
             </div>
           </div>
           <div class="data-card">
             <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click text to edit. Edited items will be locked in. Hit "Save All Changes" on top when done.</p>
-            <div class="table-responsive" style="max-height: 550px;"><table class="table table-hover table-bordered table-striped mb-0">
+            <div class="table-responsive"><table class="table table-hover table-bordered table-striped mb-0">
               <thead class="sticky-top"><tr><th>#</th><th class="text-start">Item Name</th><th>Supplier Name</th><th>Units Pattern</th></tr></thead>
               <tbody id="masterItemsTableBody"><tr><td colspan="4" class="text-muted p-4">Awaiting grid synchronization...</td></tr></tbody>
             </table></div>
+            <div class="pagination-container"><div id="masterPageInfo" class="text-muted"></div><div id="masterPaginationBtns" class="btn-group btn-group-sm"></div></div>
           </div>
         </div>
 
-        <!-- TAB 3: STAFF DIRECTORY -->
         <div id="panel-staff-dir" class="admin-tab-content d-none">
           <div class="text-end mb-3"><button class="btn btn-success btn-sm fw-bold" onclick="addNewStaffRowToGrid()">+ Inject New Staff Profile</button></div>
           <div class="data-card">
@@ -145,30 +142,34 @@
           </div>
         </div>
 
-        <!-- TAB 4: PRODUCTION CHECKLIST -->
         <div id="panel-production" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">⏳ Sync State</label><select id="prodStatusFilter" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
             <div class="col-md-4 col-12"><label class="fw-bold text-secondary mb-1">🔍 Search Prep Item</label><input type="text" id="prodSearch" class="form-control form-control-sm" placeholder="Search production items..." oninput="applyFilters('production')"></div>
           </div></div>
-          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
-            <thead><tr><th>Prep Date & Time</th><th class="text-start">Prep Item</th><th>Quantity</th><th>Unit</th><th>Submitted By</th><th>Sync State</th></tr></thead>
-            <tbody id="productionTableBody"></tbody>
-          </table></div></div>
+          <div class="data-card">
+            <div class="table-responsive"><table class="table table-hover table-striped mb-0">
+              <thead><tr><th>Prep Date & Time</th><th class="text-start">Prep Item</th><th>Quantity</th><th>Unit</th><th>Submitted By</th><th>Sync State</th></tr></thead>
+              <tbody id="productionTableBody"></tbody>
+            </table></div>
+            <div class="pagination-container"><div id="prodPageInfo" class="text-muted"></div><div id="prodPaginationBtns" class="btn-group btn-group-sm"></div></div>
+          </div>
         </div>
 
-        <!-- TAB 5: WASTAGE CHECKLIST -->
         <div id="panel-wastage" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">⏳ Sync State</label><select id="wasteStatusFilter" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
             <div class="col-md-4 col-12"><label class="fw-bold text-secondary mb-1">🔍 Search Waste Item</label><input type="text" id="wasteSearch" class="form-control form-control-sm" placeholder="Search wastage items..." oninput="applyFilters('wastage')"></div>
           </div></div>
-          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
-            <thead><tr><th>Waste Date & Time</th><th class="text-start">Item Name</th><th>Quantity</th><th>Unit</th><th>Reason</th><th>Logged By</th><th>Sync State</th></tr></thead>
-            <tbody id="wastageTableBody"></tbody>
-          </table></div></div>
+          <div class="data-card">
+            <div class="table-responsive"><table class="table table-hover table-striped mb-0">
+              <thead><tr><th>Waste Date & Time</th><th class="text-start">Item Name</th><th>Quantity</th><th>Unit</th><th>Reason</th><th>Logged By</th><th>Sync State</th></tr></thead>
+              <tbody id="wastageTableBody"></tbody>
+            </table></div>
+            <div class="pagination-container"><div id="wastePageInfo" class="text-muted"></div><div id="wastePaginationBtns" class="btn-group btn-group-sm"></div></div>
+          </div>
         </div>
 
       </div>
@@ -178,12 +179,18 @@
   <script>
     const CORE_API_URL = "https://script.google.com/macros/s/AKfycbxUsaTJhpGtXC-aI5Frl_Jxs4sFQx14o0aoQV6WwZNcRPUl6XnxiW5OHMrj-hdi5MkMug/exec";
     const MASTER_PIN = "9988";
+    const PAGE_SIZE = 30; // প্রতি পেজে সর্বোচ্চ ৩০টি রো লোড হবে সুপার-স্পিডের জন্য
     
     let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
+    let filteredOrders = [], filteredMasterItems = [], filteredProduction = [], filteredWastage = [];
     let uniqueSuppliersList = [];
     let currentTab = 'orders';
-    let localEditedItems = {}; // ট্র্যাক রাখবে আপনি কোন কোন আইটেম এডিট করেছেন
-    let localEditedStaff = {}; // ট্র্যাক রাখবে আপনি কোন কোন স্টাফ এডিট করেছেন
+    
+    // পেজিনেশন ইনডেক্স ট্র্যাক
+    let currentPages = { orders: 1, 'master-items': 1, production: 1, wastage: 1 };
+    
+    let localEditedItems = {}; 
+    let localEditedStaff = {}; 
 
     function triggerToast(msg) {
       const toast = document.getElementById("toastAlert");
@@ -222,10 +229,16 @@
       p.innerText = val || "-"; 
       
       if (type === 'item') {
-        if (!localEditedItems[rowId]) localEditedItems[rowId] = { rowId: rowId };
+        if (!localEditedItems[rowId]) {
+          let orig = dbMasterItems.find(i => i.rowId == rowId) || { name: "", supplier: "Internal", unit: "PCS" };
+          localEditedItems[rowId] = { rowId: rowId, name: orig.name, supplier: orig.supplier, unit: orig.unit };
+        }
         localEditedItems[rowId][field] = val;
       } else if (type === 'staff') {
-        if (!localEditedStaff[rowId]) localEditedStaff[rowId] = { rowId: rowId };
+        if (!localEditedStaff[rowId]) {
+          let orig = dbStaffList.find(s => s.rowId == rowId) || { code: "", name: "" };
+          localEditedStaff[rowId] = { rowId: rowId, code: orig.code, name: orig.name };
+        }
         localEditedStaff[rowId][field] = val;
       }
     }
@@ -235,7 +248,10 @@
       let p = select.parentElement; 
       p.innerText = val || "-"; 
       
-      if (!localEditedItems[rowId]) localEditedItems[rowId] = { rowId: rowId };
+      if (!localEditedItems[rowId]) {
+        let orig = dbMasterItems.find(i => i.rowId == rowId) || { name: "", supplier: "Internal", unit: "PCS" };
+        localEditedItems[rowId] = { rowId: rowId, name: orig.name, supplier: orig.supplier, unit: orig.unit };
+      }
       localEditedItems[rowId]['supplier'] = val;
     }
 
@@ -259,16 +275,19 @@
         fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; populateSupplierFilter(data); applyFilters('orders'); });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
         localEditedItems = {}; localEditedStaff = {};
+        document.getElementById("masterItemsTableBody").innerHTML = '<tr><td colspan="4">Syncing assets...</td></tr>';
         fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { 
           dbMasterItems = data.items; 
           dbStaffList = data.staffList; 
           uniqueSuppliersList = [...new Set(dbMasterItems.map(i => i.supplier).filter(Boolean))];
-          renderMasterItemsGrid(dbMasterItems); 
+          applyFilters('master-items');
           renderStaffGrid(dbStaffList); 
         });
       } else if (currentTab === 'production') {
+        document.getElementById("productionTableBody").innerHTML = '<tr><td colspan="6">Syncing production matrix...</td></tr>';
         fetch(`${CORE_API_URL}?action=getProdHistory`).then(res => res.json()).then(data => { dbProduction = data; applyFilters('production'); });
       } else if (currentTab === 'wastage') {
+        document.getElementById("wastageTableBody").innerHTML = '<tr><td colspan="7">Syncing damage log sheets...</td></tr>';
         fetch(`${CORE_API_URL}?action=getWasteHistory`).then(res => res.json()).then(data => { dbWastage = data; applyFilters('wastage'); });
       }
     }
@@ -287,52 +306,101 @@
         let fSearch = document.getElementById('ordFilterSearch').value.toLowerCase();
         let fPending = document.getElementById('ordPendingToggle').checked;
         
-        let filtered = dbOrders.filter(row => {
+        filteredOrders = dbOrders.filter(row => {
           return (!fDate || row.rawDate === fDate) && 
                  (!fSup || row.supplier === fSup) && 
                  (!fState || row.status.toUpperCase() === fState) &&
                  (!fSearch || row.item.toLowerCase().includes(fSearch)) &&
                  (!fPending || row.status.toUpperCase() === "PENDING");
         });
-        renderOrdersTable(filtered);
-      } else if (mode === 'production') {
+        currentPages.orders = 1;
+        renderOrdersTable();
+      } 
+      else if (mode === 'master-items') {
+        let s = document.getElementById("masterItemsSearch").value.toLowerCase();
+        filteredMasterItems = dbMasterItems.filter(item => !s || item.name.toLowerCase().includes(s));
+        currentPages['master-items'] = 1;
+        renderMasterItemsGrid();
+      }
+      else if (mode === 'production') {
         let fDate = document.getElementById('prodFilterDate').value;
         let search = document.getElementById("prodSearch").value.toLowerCase();
         let stat = document.getElementById("prodStatusFilter").value.toUpperCase();
         
-        let filtered = dbProduction.filter(r => {
+        filteredProduction = dbProduction.filter(r => {
           let rowIsoDate = r.timestamp ? new Date(r.timestamp).toISOString().split('T')[0] : "";
           return (!fDate || rowIsoDate === fDate) &&
                  (!search || r.item.toLowerCase().includes(search)) && 
                  (!stat || r.status.toUpperCase() === stat);
         });
-        
-        let tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
-        filtered.forEach((row, i) => {
-          tbody.innerHTML += `<tr class="prod-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select id="p_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
-        });
-      } else if (mode === 'wastage') {
+        currentPages.production = 1;
+        renderProductionTable();
+      } 
+      else if (mode === 'wastage') {
         let fDate = document.getElementById('wasteFilterDate').value;
         let search = document.getElementById("wasteSearch").value.toLowerCase();
         let stat = document.getElementById("wasteStatusFilter").value.toUpperCase();
         
-        let filtered = dbWastage.filter(r => {
+        filteredWastage = dbWastage.filter(r => {
           let rowIsoDate = r.timestamp ? new Date(r.timestamp).toISOString().split('T')[0] : "";
           return (!fDate || rowIsoDate === fDate) &&
                  (!search || r.item.toLowerCase().includes(search)) && 
                  (!stat || r.status.toUpperCase() === stat);
         });
-        
-        let tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
-        filtered.forEach((row, i) => {
-          tbody.innerHTML += `<tr class="waste-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select id="w_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
-        });
+        currentPages.wastage = 1;
+        renderWastageTable();
       }
     }
 
-    function renderOrdersTable(data) {
+    // 📄 জেনারেট পেজিনেশন কন্ট্রোল বাটন ইঞ্জিন
+    function setupPaginationControls(totalItems, tabKey, targetDivId, infoDivId) {
+      let totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+      let currPage = currentPages[tabKey];
+      
+      let infoDiv = document.getElementById(infoDivId);
+      if (infoDiv) {
+        let start = totalItems === 0 ? 0 : (currPage - 1) * PAGE_SIZE + 1;
+        let end = Math.min(currPage * PAGE_SIZE, totalItems);
+        infoDiv.innerText = `Showing ${start}-${end} of ${totalItems} rows`;
+      }
+      
+      let container = document.getElementById(targetDivId);
+      if (!container) return;
+      container.innerHTML = "";
+      
+      if (totalPages <= 1) return;
+      
+      let prevBtn = `<button class="btn btn-outline-dark btn-sm" ${currPage===1?'disabled':''} onclick="changePage('${tabKey}', ${currPage-1})">Prev</button>`;
+      let nextBtn = `<button class="btn btn-outline-dark btn-sm" ${currPage===totalPages?'disabled':''} onclick="changePage('${tabKey}', ${currPage+1})">Next</button>`;
+      
+      let pagesHtml = "";
+      let startPage = Math.max(1, currPage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+      
+      for (let p = startPage; p <= endPage; p++) {
+        pagesHtml += `<button class="btn ${p===currPage?'btn-dark':'btn-outline-dark'} btn-sm" onclick="changePage('${tabKey}', ${p})">${p}</button>`;
+      }
+      container.innerHTML = prevBtn + pagesHtml + nextBtn;
+    }
+
+    function changePage(tabKey, targetPage) {
+      currentPages[tabKey] = targetPage;
+      if (tabKey === 'orders') renderOrdersTable();
+      if (tabKey === 'master-items') renderMasterItemsGrid();
+      if (tabKey === 'production') renderProductionTable();
+      if (tabKey === 'wastage') renderWastageTable();
+    }
+
+    function renderOrdersTable() {
       const tbody = document.getElementById("ordersTableBody"); tbody.innerHTML = "";
-      data.forEach((row, i) => {
+      if (filteredOrders.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="p-3 text-muted">No matching order records found.</td></tr>'; return; }
+      
+      let start = (currentPages.orders - 1) * PAGE_SIZE;
+      let end = start + PAGE_SIZE;
+      let pageData = filteredOrders.slice(start, end);
+      
+      pageData.forEach((row, idx) => {
+        let i = start + idx; // গ্লোবাল ইনডেক্স ইনপুট ট্র্যাকিং এরর এড়াতে
         let sClass = row.status.toUpperCase() === 'RECEIVED' ? 'badge-received' : (row.status.toUpperCase() === 'ORDERED' ? 'badge-ordered' : 'badge-pending');
         tbody.innerHTML += `
           <tr class="order-data-row" data-ts="${row.rawDate}" data-name="${row.item}">
@@ -341,24 +409,62 @@
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
             <td><span class="badge-status ${sClass}">${row.status}</span></td>
-            <td><select id="o_stat_${i}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(${i})"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${row.status.toUpperCase()==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${row.status.toUpperCase()==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${row.status.toUpperCase()==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
-            <td><input type="date" id="o_date_${i}" class="form-control form-control-sm" value="${row.receivedDate||""}" ${row.status.toUpperCase()!=='RECEIVED'?'disabled':''}></td>
-            <td><input type="text" id="o_rem_${i}" class="form-control form-control-sm" value="${row.remarks||""}"></td>
+            <td><select class="form-select form-select-sm fw-bold row-status-selector" data-idx="${i}" onchange="toggleOrderDate(this)"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${row.status.toUpperCase()==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${row.status.toUpperCase()==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${row.status.toUpperCase()==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
+            <td><input type="date" id="o_date_${i}" class="form-control form-control-sm row-date-input" value="${row.receivedDate||""}" ${row.status.toUpperCase()!=='RECEIVED'?'disabled':''}></td>
+            <td><input type="text" id="o_rem_${i}" class="form-control form-control-sm row-remarks-input" value="${row.remarks||""}"></td>
           </tr>`;
       });
+      setupPaginationControls(filteredOrders.length, 'orders', 'ordersPaginationBtns', 'ordersPageInfo');
     }
 
-    function toggleOrderDate(i) {
-      let s = document.getElementById(`o_stat_${i}`).value;
-      document.getElementById(`o_date_${i}`).disabled = (s !== "RECEIVED");
-      if(s === "RECEIVED" && !document.getElementById(`o_date_${i}`).value) document.getElementById(`o_date_${i}`).value = new Date().toISOString().split('T')[0];
+    function toggleOrderDate(selectEl) {
+      let idx = selectEl.dataset.idx;
+      let dateInput = document.getElementById(`o_date_${idx}`);
+      dateInput.disabled = (selectEl.value !== "RECEIVED");
+      if(selectEl.value === "RECEIVED" && !dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
     }
 
-    function renderMasterItemsGrid(items) {
+    function renderMasterItemsGrid() {
       const tbody = document.getElementById("masterItemsTableBody"); tbody.innerHTML = "";
-      items.forEach((item, i) => {
-        tbody.innerHTML += `<tr id="item_tr_${item.rowId}"><td>${i+1}</td><td class="text-start editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'name')">${item.name}</td><td class="editable-cell fw-bold text-primary" onclick="toggleSupplierDropdownEdit(this, '${item.rowId}')">${item.supplier}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'unit')">${item.unit}</td></tr>`;
+      if (filteredMasterItems.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-muted">No products found.</td></tr>'; return; }
+      
+      let start = (currentPages['master-items'] - 1) * PAGE_SIZE;
+      let end = start + PAGE_SIZE;
+      let pageData = filteredMasterItems.slice(start, end);
+      
+      pageData.forEach((item, idx) => {
+        let globalIdx = start + idx;
+        tbody.innerHTML += `<tr id="item_tr_${item.rowId}"><td>${globalIdx+1}</td><td class="text-start editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'name')">${item.name}</td><td class="editable-cell fw-bold text-primary" onclick="toggleSupplierDropdownEdit(this, '${item.rowId}')">${item.supplier}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'unit')">${item.unit}</td></tr>`;
       });
+      setupPaginationControls(filteredMasterItems.length, 'master-items', 'masterPaginationBtns', 'masterPageInfo');
+    }
+
+    function renderProductionTable() {
+      const tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
+      if (filteredProduction.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-muted">No records.</td></tr>'; return; }
+      
+      let start = (currentPages.production - 1) * PAGE_SIZE;
+      let end = start + PAGE_SIZE;
+      let pageData = filteredProduction.slice(start, end);
+      
+      pageData.forEach((row, i) => {
+        tbody.innerHTML += `<tr class="prod-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold row-status-selector"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+      });
+      setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
+    }
+
+    function renderWastageTable() {
+      const tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
+      if (filteredWastage.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-muted">No records.</td></tr>'; return; }
+      
+      let start = (currentPages.wastage - 1) * PAGE_SIZE;
+      let end = start + PAGE_SIZE;
+      let pageData = filteredWastage.slice(start, end);
+      
+      pageData.forEach((row, i) => {
+        tbody.innerHTML += `<tr class="waste-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold row-status-selector"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+      });
+      setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
 
     function renderStaffGrid(list) {
@@ -392,29 +498,27 @@
       localEditedStaff[tempId] = { rowId: "NEW", code: "0000", name: "Staff Name" };
     }
 
-    function filterMasterItemsGrid() {
-      let s = document.getElementById("masterItemsSearch").value.toLowerCase();
-      document.querySelectorAll("#masterItemsTableBody tr").forEach(tr => {
-        let nameCell = tr.cells[1];
-        let name = nameCell ? nameCell.innerText.toLowerCase() : "";
-        tr.style.display = name.includes(s) ? "" : "none";
-      });
-    }
-
     function submitGlobalBulkChanges() {
       triggerToast("Engaging Bulk Data Lock Shuttles...");
       
       if (currentTab === 'orders' || currentTab === 'production' || currentTab === 'wastage') {
         let payload = { action: "adminBulkSave", orders: [], production: [], wastage: [] };
-        document.querySelectorAll(".order-data-row").forEach((tr, i) => {
-          payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`o_stat_${i}`).value, receivedDate: document.getElementById(`o_date_${i}`).value, remarks: document.getElementById(`o_rem_${i}`).value });
+        
+        document.querySelectorAll(".order-data-row").forEach((tr) => {
+          let stat = tr.querySelector('.row-status-selector').value;
+          let dateVal = tr.querySelector('.row-date-input').value;
+          let rem = tr.querySelector('.row-remarks-input').value;
+          payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat, receivedDate: dateVal, remarks: rem });
         });
-        document.querySelectorAll(".prod-data-row").forEach((tr, i) => {
-          payload.production.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`p_stat_${i}`).value });
+        document.querySelectorAll(".prod-data-row").forEach((tr) => {
+          let stat = tr.querySelector('.row-status-selector').value;
+          payload.production.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat });
         });
-        document.querySelectorAll(".waste-data-row").forEach((tr, i) => {
-          payload.wastage.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`w_stat_${i}`).value });
+        document.querySelectorAll(".waste-data-row").forEach((tr) => {
+          let stat = tr.querySelector('.row-status-selector').value;
+          payload.wastage.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat });
         });
+        
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Operational Matrix Capped!"); reloadCurrentActiveGrid(); } });
       } 
       else if (currentTab === 'master-items') {
