@@ -47,6 +47,7 @@
 </head>
 <body>
 
+  <!-- MOBILE HEADER BAR -->
   <div class="top-navbar">
     <span class="fw-bold m-0"><i class="bi bi-cpu-fill me-1"></i> GOYA CORE</span>
     <button class="btn btn-sm btn-outline-light" onclick="toggleMobileSidebar()"><i class="bi bi-list fs-5"></i></button>
@@ -56,6 +57,7 @@
     <div class="d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i><div id="toastMessage">Sync Mode Engine Active.</div></div>
   </div>
 
+  <!-- SECURITY GATE -->
   <div id="pinGate" class="gate-container">
     <div class="fs-1 text-primary mb-2"><i class="bi bi-shield-lock-fill"></i></div>
     <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
@@ -64,9 +66,11 @@
     <p id="gateError" class="text-danger mt-2 small d-none">Invalid PIN.</p>
   </div>
 
+  <!-- WORKSPACE LAYOUT -->
   <div id="adminPanel" class="container-fluid d-none">
     <div class="row">
       
+      <!-- NAVIGATION SIDEBAR -->
       <div id="sidebarMenu" class="col-md-3 col-lg-2 sidebar">
         <div class="d-none d-md-flex align-items-center mb-4 pb-2 border-bottom">
           <i class="bi bi-cpu-fill text-primary fs-5 me-2"></i><span class="brand-title">GOYA CORE</span>
@@ -81,6 +85,7 @@
         <button class="btn btn-sm btn-danger w-100 mt-5" onclick="location.reload()">Lock Console</button>
       </div>
 
+      <!-- MAIN CONTROL INTERFACE -->
       <div class="col-md-9 col-lg-10 main-content">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 g-2">
           <h3 id="stageTitle" class="fw-bold m-0 text-dark">Orders Overrider Panel</h3>
@@ -90,6 +95,7 @@
           </div>
         </div>
 
+        <!-- TAB 1: ORDERS OVERRIDER PANEL -->
         <div id="panel-orders" class="admin-tab-content">
           <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
@@ -114,6 +120,7 @@
           </div>
         </div>
 
+        <!-- TAB 2: MASTER ITEMS MANAGER -->
         <div id="panel-master-items" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
@@ -131,6 +138,7 @@
           </div>
         </div>
 
+        <!-- TAB 3: STAFF DIRECTORY -->
         <div id="panel-staff-dir" class="admin-tab-content d-none">
           <div class="text-end mb-3"><button class="btn btn-success btn-sm fw-bold" onclick="addNewStaffRowToGrid()">+ Inject New Staff Profile</button></div>
           <div class="data-card">
@@ -142,6 +150,7 @@
           </div>
         </div>
 
+        <!-- TAB 4: PRODUCTION CHECKLIST -->
         <div id="panel-production" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
@@ -157,6 +166,7 @@
           </div>
         </div>
 
+        <!-- TAB 5: WASTAGE CHECKLIST -->
         <div id="panel-wastage" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
@@ -179,14 +189,13 @@
   <script>
     const CORE_API_URL = "https://script.google.com/macros/s/AKfycbxUsaTJhpGtXC-aI5Frl_Jxs4sFQx14o0aoQV6WwZNcRPUl6XnxiW5OHMrj-hdi5MkMug/exec";
     const MASTER_PIN = "9988";
-    const PAGE_SIZE = 30; // প্রতি পেজে সর্বোচ্চ ৩০টি রো লোড হবে সুপার-স্পিডের জন্য
+    const PAGE_SIZE = 30;
     
     let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
     let filteredOrders = [], filteredMasterItems = [], filteredProduction = [], filteredWastage = [];
     let uniqueSuppliersList = [];
     let currentTab = 'orders';
     
-    // পেজিনেশন ইনডেক্স ট্র্যাক
     let currentPages = { orders: 1, 'master-items': 1, production: 1, wastage: 1 };
     
     let localEditedItems = {}; 
@@ -202,7 +211,7 @@
       if (document.getElementById("adminPinInput").value.trim() === MASTER_PIN) {
         document.getElementById("pinGate").classList.add("d-none");
         document.getElementById("adminPanel").classList.remove("d-none");
-        loadDataGrid('orders');
+        switchActiveTab('orders');
       } else { document.getElementById("gateError").classList.remove("d-none"); }
     }
 
@@ -262,10 +271,14 @@
       document.querySelectorAll(".nav-custom .nav-link").forEach(el => el.classList.remove("active"));
       
       document.getElementById(`panel-${target}`).classList.remove("d-none");
-      event.currentTarget.classList.add("active");
+      
+      let navBtns = document.querySelectorAll(".nav-custom .nav-link");
+      navBtns.forEach(btn => {
+        if(btn.getAttribute('onclick').includes(target)) btn.classList.add("active");
+      });
       
       let titles = { 'orders': 'Orders Overrider Panel', 'master-items': 'Master Items Asset Grid (400+ lines)', 'staff-dir': 'Staff Credentials Hub', 'production': 'Production Batch Log Check', 'wastage': 'Wastage Damage Log Check' };
-      document.getElementById("stageTitle").innerText = titles[target];
+      document.getElementById("stageTitle").innerText = titles[target] || 'Goya Control Hub';
       reloadCurrentActiveGrid();
     }
 
@@ -352,7 +365,6 @@
       }
     }
 
-    // 📄 জেনারেট পেজিনেশন কন্ট্রোল বাটন ইঞ্জিন
     function setupPaginationControls(totalItems, tabKey, targetDivId, infoDivId) {
       let totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
       let currPage = currentPages[tabKey];
@@ -400,7 +412,7 @@
       let pageData = filteredOrders.slice(start, end);
       
       pageData.forEach((row, idx) => {
-        let i = start + idx; // গ্লোবাল ইনডেক্স ইনপুট ট্র্যাকিং এরর এড়াতে
+        let i = start + idx;
         let sClass = row.status.toUpperCase() === 'RECEIVED' ? 'badge-received' : (row.status.toUpperCase() === 'ORDERED' ? 'badge-ordered' : 'badge-pending');
         tbody.innerHTML += `
           <tr class="order-data-row" data-ts="${row.rawDate}" data-name="${row.item}">
@@ -506,8 +518,9 @@
         
         document.querySelectorAll(".order-data-row").forEach((tr) => {
           let stat = tr.querySelector('.row-status-selector').value;
-          let dateVal = tr.querySelector('.row-date-input').value;
-          let rem = tr.querySelector('.row-remarks-input').value;
+          let trIdx = tr.querySelector('.row-status-selector').dataset.idx;
+          let dateVal = document.getElementById(`o_date_${trIdx}`).value;
+          let rem = document.getElementById(`o_rem_${trIdx}`).value;
           payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat, receivedDate: dateVal, remarks: rem });
         });
         document.querySelectorAll(".prod-data-row").forEach((tr) => {
@@ -535,3 +548,4 @@
   </script>
 </body>
 </html>
+
