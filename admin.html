@@ -8,10 +8,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
     :root { --goya-bg: #d1d1d3; --goya-dark: #1f4e78; --goya-accent: #153552; }
-    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: #333; min-height: 100vh; }
+    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: #33; min-height: 100vh; }
     
     .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-    
     .top-navbar { background-color: var(--goya-dark); color: white; display: none; padding: 12px 20px; align-items: center; justify-content: space-between; }
     .sidebar { background-color: white; min-height: 100vh; padding: 25px 15px; box-shadow: 4px 0 15px rgba(0,0,0,0.02); }
     .main-content { padding: 30px; }
@@ -46,7 +45,6 @@
 </head>
 <body>
 
-  <!-- MOBILE HEADER BAR -->
   <div class="top-navbar">
     <span class="fw-bold m-0"><i class="bi bi-cpu-fill me-1"></i> GOYA CORE</span>
     <button class="btn btn-sm btn-outline-light" onclick="toggleMobileSidebar()"><i class="bi bi-list fs-5"></i></button>
@@ -127,10 +125,10 @@
             </div>
           </div>
           <div class="data-card">
-            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click text to edit. Supplier column provides dropdown mapping. Hit "Save All Changes" on top when done.</p>
+            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click text to edit. Edited items will be locked in. Hit "Save All Changes" on top when done.</p>
             <div class="table-responsive" style="max-height: 550px;"><table class="table table-hover table-bordered table-striped mb-0">
-              <thead class="sticky-top"><tr><th>#</th><th class="text-start">Item Name</th><th>Supplier Name</th><th>Units Pattern</th><th>Action</th></tr></thead>
-              <tbody id="masterItemsTableBody"><tr><td colspan="5" class="text-muted p-4">Awaiting grid synchronization...</td></tr></tbody>
+              <thead class="sticky-top"><tr><th>#</th><th class="text-start">Item Name</th><th>Supplier Name</th><th>Units Pattern</th></tr></thead>
+              <tbody id="masterItemsTableBody"><tr><td colspan="4" class="text-muted p-4">Awaiting grid synchronization...</td></tr></tbody>
             </table></div>
           </div>
         </div>
@@ -141,13 +139,13 @@
           <div class="data-card">
             <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click cells below to update parameters directly.</p>
             <div class="table-responsive"><table class="table table-hover table-bordered table-striped mb-0">
-              <thead><tr><th>Secret Login PIN</th><th>Staff Identity Label</th><th>Action</th></tr></thead>
-              <tbody id="staffTableBody"><tr><td colspan="3" class="text-muted p-4">Awaiting access grid...</td></tr></tbody>
+              <thead><tr><th>Secret Login PIN</th><th>Staff Identity Label</th></tr></thead>
+              <tbody id="staffTableBody"><tr><td colspan="2" class="text-muted p-4">Awaiting access grid...</td></tr></tbody>
             </table></div>
           </div>
         </div>
 
-        <!-- TAB 4: PRODUCTION FOODICS CHECKLIST -->
+        <!-- TAB 4: PRODUCTION CHECKLIST -->
         <div id="panel-production" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
@@ -160,7 +158,7 @@
           </table></div></div>
         </div>
 
-        <!-- TAB 5: WASTAGE FOODICS CHECKLIST -->
+        <!-- TAB 5: WASTAGE CHECKLIST -->
         <div id="panel-wastage" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
@@ -178,12 +176,14 @@
   </div>
 
   <script>
-    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbwOcyFSZL8fr5YDD9hsboZaLRyrJlrKUoiXlmi5GqBhommvz2lF8YdwRG0eGIz-yCBLiw/exec";
+    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbx3D2WaLDZ28-sbel1dHuxREx-17Vx5f7ZKgiP4MZFFQNJNksbG0ZKgMYi84yG-EpiHKA/exec";
     const MASTER_PIN = "9988";
     
     let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
     let uniqueSuppliersList = [];
     let currentTab = 'orders';
+    let localEditedItems = {}; // ট্র্যাক রাখবে আপনি কোন কোন আইটেম এডিট করেছেন
+    let localEditedStaff = {}; // ট্র্যাক রাখবে আপনি কোন কোন স্টাফ এডিট করেছেন
 
     function triggerToast(msg) {
       const toast = document.getElementById("toastAlert");
@@ -201,23 +201,43 @@
 
     function toggleMobileSidebar() { document.getElementById("sidebarMenu").classList.toggle("open"); }
     
-    function toggleCellToEdit(cell) {
+    function toggleCellToEdit(cell, type, rowId, field) {
       if (cell.querySelector('input') || cell.querySelector('select')) return;
       let currentVal = cell.innerText.trim();
-      cell.innerHTML = `<input type="text" class="cell-input" value="${currentVal}" onblur="closeCellEdit(this)" onkeydown="if(event.key==='Enter') this.blur()">`;
+      cell.innerHTML = `<input type="text" class="cell-input" value="${currentVal}" onblur="closeCellEdit(this, '${type}', '${rowId}', '${field}')" onkeydown="if(event.key==='Enter') this.blur()">`;
       cell.querySelector('input').focus();
     }
     
-    function toggleSupplierDropdownEdit(cell) {
+    function toggleSupplierDropdownEdit(cell, rowId) {
       if (cell.querySelector('select') || cell.querySelector('input')) return;
       let currentVal = cell.innerText.trim();
       let optionsHtml = uniqueSuppliersList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
-      cell.innerHTML = `<select class="cell-select" onblur="closeCellSelect(this)" onchange="closeCellSelect(this)">${optionsHtml}</select>`;
+      cell.innerHTML = `<select class="cell-select" onblur="closeCellSelect(this, '${rowId}')" onchange="closeCellSelect(this, '${rowId}')">${optionsHtml}</select>`;
       cell.querySelector('select').focus();
     }
 
-    function closeCellEdit(input) { let val = input.value.trim(); let p = input.parentElement; p.innerText = val || "-"; }
-    function closeCellSelect(select) { let val = select.value; let p = select.parentElement; p.innerText = val || "-"; }
+    function closeCellEdit(input, type, rowId, field) { 
+      let val = input.value.trim(); 
+      let p = input.parentElement; 
+      p.innerText = val || "-"; 
+      
+      if (type === 'item') {
+        if (!localEditedItems[rowId]) localEditedItems[rowId] = { rowId: rowId };
+        localEditedItems[rowId][field] = val;
+      } else if (type === 'staff') {
+        if (!localEditedStaff[rowId]) localEditedStaff[rowId] = { rowId: rowId };
+        localEditedStaff[rowId][field] = val;
+      }
+    }
+    
+    function closeCellSelect(select, rowId) { 
+      let val = select.value; 
+      let p = select.parentElement; 
+      p.innerText = val || "-"; 
+      
+      if (!localEditedItems[rowId]) localEditedItems[rowId] = { rowId: rowId };
+      localEditedItems[rowId]['supplier'] = val;
+    }
 
     function switchActiveTab(target) {
       currentTab = target;
@@ -238,6 +258,7 @@
         document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
         fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; populateSupplierFilter(data); applyFilters('orders'); });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
+        localEditedItems = {}; localEditedStaff = {};
         fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { 
           dbMasterItems = data.items; 
           dbStaffList = data.staffList; 
@@ -336,46 +357,55 @@
     function renderMasterItemsGrid(items) {
       const tbody = document.getElementById("masterItemsTableBody"); tbody.innerHTML = "";
       items.forEach((item, i) => {
-        tbody.innerHTML += `<tr><td>${i+1}</td><td class="text-start editable-cell m-item-name" onclick="toggleCellToEdit(this)">${item.name}</td><td class="editable-cell m-item-sup fw-bold text-primary" onclick="toggleSupplierDropdownEdit(this)">${item.supplier}</td><td class="editable-cell m-item-unit" onclick="toggleCellToEdit(this)">${item.unit}</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td></tr>`;
+        tbody.innerHTML += `<tr id="item_tr_${item.rowId}"><td>${i+1}</td><td class="text-start editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'name')">${item.name}</td><td class="editable-cell fw-bold text-primary" onclick="toggleSupplierDropdownEdit(this, '${item.rowId}')">${item.supplier}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'unit')">${item.unit}</td></tr>`;
       });
     }
 
     function renderStaffGrid(list) {
       const tbody = document.getElementById("staffTableBody"); tbody.innerHTML = "";
       list.forEach(st => {
-        tbody.innerHTML += `<tr><td class="editable-cell s-grid-code fw-bold text-primary" onclick="toggleCellToEdit(this)">${st.code}</td><td class="editable-cell s-grid-name" onclick="toggleCellToEdit(this)">${st.name}</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td></tr>`;
+        tbody.innerHTML += `<tr id="staff_tr_${st.rowId}"><td class="editable-cell fw-bold text-primary" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'code')">${st.code}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'name')">${st.name}</td></tr>`;
       });
     }
 
+    let newItemCounter = 0;
     function addNewItemRowToGrid() {
+      newItemCounter++;
+      let tempId = `NEW_${newItemCounter}`;
       const tbody = document.getElementById("masterItemsTableBody");
       let row = document.createElement('tr');
-      row.innerHTML = `<td>+</td><td class="text-start editable-cell m-item-name text-danger" onclick="toggleCellToEdit(this)">New Item</td><td class="editable-cell m-item-sup text-danger fw-bold" onclick="toggleSupplierDropdownEdit(this)">Supplier</td><td class="editable-cell m-item-unit text-danger" onclick="toggleCellToEdit(this)">PCS</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td>`;
+      row.id = `item_tr_${tempId}`;
+      row.innerHTML = `<td>+</td><td class="text-start editable-cell text-danger" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'name')">Click to add Name</td><td class="editable-cell text-danger fw-bold" onclick="toggleSupplierDropdownEdit(this, '${tempId}')">Select Supplier</td><td class="editable-cell text-danger" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'unit')">PCS</td>`;
       tbody.prepend(row);
+      localEditedItems[tempId] = { rowId: "NEW", name: "Click to add Name", supplier: uniqueSuppliersList[0]||"Internal", unit: "PCS" };
     }
 
+    let newStaffCounter = 0;
     function addNewStaffRowToGrid() {
+      newStaffCounter++;
+      let tempId = `NEW_${newStaffCounter}`;
       const tbody = document.getElementById("staffTableBody");
       let row = document.createElement('tr');
-      row.innerHTML = `<td class="editable-cell s-grid-code fw-bold text-danger" onclick="toggleCellToEdit(this)">0000</td><td class="editable-cell s-grid-name text-danger" onclick="toggleCellToEdit(this)">Full Name</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td>`;
+      row.id = `staff_tr_${tempId}`;
+      row.innerHTML = `<td class="editable-cell fw-bold text-danger" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'code')">0000</td><td class="editable-cell text-danger" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'name')">Staff Name</td>`;
       tbody.prepend(row);
+      localEditedStaff[tempId] = { rowId: "NEW", code: "0000", name: "Staff Name" };
     }
 
     function filterMasterItemsGrid() {
       let s = document.getElementById("masterItemsSearch").value.toLowerCase();
       document.querySelectorAll("#masterItemsTableBody tr").forEach(tr => {
-        let name = tr.querySelector('.m-item-name') ? tr.querySelector('.m-item-name').innerText.toLowerCase() : "";
+        let nameCell = tr.cells[1];
+        let name = nameCell ? nameCell.innerText.toLowerCase() : "";
         tr.style.display = name.includes(s) ? "" : "none";
       });
     }
 
-    // 💾 গ্লোবাল ওয়ান-ক্লিক বাল্ক সেভ ট্রান্সমিটার লুপ ফিক্সড মেথড
     function submitGlobalBulkChanges() {
       triggerToast("Engaging Bulk Data Lock Shuttles...");
       
       if (currentTab === 'orders' || currentTab === 'production' || currentTab === 'wastage') {
         let payload = { action: "adminBulkSave", orders: [], production: [], wastage: [] };
-        
         document.querySelectorAll(".order-data-row").forEach((tr, i) => {
           payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`o_stat_${i}`).value, receivedDate: document.getElementById(`o_date_${i}`).value, remarks: document.getElementById(`o_rem_${i}`).value });
         });
@@ -385,27 +415,17 @@
         document.querySelectorAll(".waste-data-row").forEach((tr, i) => {
           payload.wastage.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`w_stat_${i}`).value });
         });
-        
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Operational Matrix Capped!"); reloadCurrentActiveGrid(); } });
       } 
       else if (currentTab === 'master-items') {
-        let items = [];
-        document.querySelectorAll("#masterItemsTableBody tr").forEach(tr => {
-          let n = tr.querySelector('.m-item-name') ? tr.querySelector('.m-item-name').innerText.trim() : "";
-          let s = tr.querySelector('.m-item-sup') ? tr.querySelector('.m-item-sup').innerText.trim() : "";
-          let u = tr.querySelector('.m-item-unit') ? tr.querySelector('.m-item-unit').innerText.trim() : "";
-          if(n && n !== "-") items.push({ name: n, supplier: s, unit: u });
-        });
-        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: items }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Grid Synchronization Complete!"); reloadCurrentActiveGrid(); } });
+        let itemsPayload = Object.values(localEditedItems);
+        if(itemsPayload.length === 0) { triggerToast("No modifications detected."); return; }
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: itemsPayload }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Grid Synchronization Complete!"); reloadCurrentActiveGrid(); } });
       } 
       else if (currentTab === 'staff-dir') {
-        let staff = [];
-        document.querySelectorAll("#staffTableBody tr").forEach(tr => {
-          let c = tr.querySelector('.s-grid-code') ? tr.querySelector('.s-grid-code').innerText.trim() : "";
-          let n = tr.querySelector('.s-grid-name') ? tr.querySelector('.s-grid-name').innerText.trim() : "";
-          if(c && c !== "-") staff.push({ code: c, name: n });
-        });
-        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staff }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Directory Secured!"); reloadCurrentActiveGrid(); } });
+        let staffPayload = Object.values(localEditedStaff);
+        if(staffPayload.length === 0) { triggerToast("No modifications detected."); return; }
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staffPayload }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Directory Secured!"); reloadCurrentActiveGrid(); } });
       }
     }
   </script>
