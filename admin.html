@@ -47,7 +47,6 @@
 </head>
 <body>
 
-  <!-- MOBILE HEADER BAR -->
   <div class="top-navbar">
     <span class="fw-bold m-0"><i class="bi bi-cpu-fill me-1"></i> GOYA CORE</span>
     <button class="btn btn-sm btn-outline-light" onclick="toggleMobileSidebar()"><i class="bi bi-list fs-5"></i></button>
@@ -57,7 +56,6 @@
     <div class="d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i><div id="toastMessage">Sync Mode Engine Active.</div></div>
   </div>
 
-  <!-- SECURITY GATE -->
   <div id="pinGate" class="gate-container">
     <div class="fs-1 text-primary mb-2"><i class="bi bi-shield-lock-fill"></i></div>
     <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
@@ -66,11 +64,9 @@
     <p id="gateError" class="text-danger mt-2 small d-none">Invalid PIN.</p>
   </div>
 
-  <!-- WORKSPACE LAYOUT -->
   <div id="adminPanel" class="container-fluid d-none">
     <div class="row">
       
-      <!-- NAVIGATION SIDEBAR -->
       <div id="sidebarMenu" class="col-md-3 col-lg-2 sidebar">
         <div class="d-none d-md-flex align-items-center mb-4 pb-2 border-bottom">
           <i class="bi bi-cpu-fill text-primary fs-5 me-2"></i><span class="brand-title">GOYA CORE</span>
@@ -85,7 +81,6 @@
         <button class="btn btn-sm btn-danger w-100 mt-5" onclick="location.reload()">Lock Console</button>
       </div>
 
-      <!-- MAIN CONTROL INTERFACE -->
       <div class="col-md-9 col-lg-10 main-content">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 g-2">
           <h3 id="stageTitle" class="fw-bold m-0 text-dark">Orders Overrider Panel</h3>
@@ -95,7 +90,6 @@
           </div>
         </div>
 
-        <!-- TAB 1: ORDERS OVERRIDER PANEL -->
         <div id="panel-orders" class="admin-tab-content">
           <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
@@ -120,7 +114,6 @@
           </div>
         </div>
 
-        <!-- TAB 2: MASTER ITEMS MANAGER -->
         <div id="panel-master-items" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
@@ -138,7 +131,6 @@
           </div>
         </div>
 
-        <!-- TAB 3: STAFF DIRECTORY -->
         <div id="panel-staff-dir" class="admin-tab-content d-none">
           <div class="text-end mb-3"><button class="btn btn-success btn-sm fw-bold" onclick="addNewStaffRowToGrid()">+ Inject New Staff Profile</button></div>
           <div class="data-card">
@@ -150,7 +142,6 @@
           </div>
         </div>
 
-        <!-- TAB 4: PRODUCTION CHECKLIST -->
         <div id="panel-production" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
@@ -166,7 +157,6 @@
           </div>
         </div>
 
-        <!-- TAB 5: WASTAGE CHECKLIST -->
         <div id="panel-wastage" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border mb-3"><div class="row g-2">
             <div class="col-md-4 col-6"><label class="fw-bold text-secondary mb-1">📅 Filter by Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
@@ -198,6 +188,10 @@
     
     let currentPages = { orders: 1, 'master-items': 1, production: 1, wastage: 1 };
     
+    // 🚀 মেমোরি চেঞ্জ ট্র্যাকার্স (সব পেজের জন্য ইন-মেমোরি লক মেথড)
+    let memoryEditedOrders = {};
+    let memoryEditedProduction = {};
+    let memoryEditedWastage = {};
     let localEditedItems = {}; 
     let localEditedStaff = {}; 
 
@@ -264,6 +258,28 @@
       localEditedItems[rowId]['supplier'] = val;
     }
 
+    function trackOrderChangeInMemory(rawDate, itemName) {
+      let key = rawDate + "_" + itemName;
+      let origRow = dbOrders.find(r => r.rawDate === rawDate && r.item === itemName);
+      if(!origRow) return;
+
+      let stat = document.getElementById(`o_stat_${rawDate}_${btoa(unescape(encodeURIComponent(itemName)))}`).value;
+      let rDate = document.getElementById(`o_date_${rawDate}_${btoa(unescape(encodeURIComponent(itemName)))}`).value;
+      let rem = document.getElementById(`o_rem_${rawDate}_${btoa(unescape(encodeURIComponent(itemName)))}`).value;
+
+      memoryEditedOrders[key] = { rawDate: rawDate, itemName: itemName, status: stat, receivedDate: rDate, remarks: rem };
+    }
+
+    function trackProdChangeInMemory(rawDate, itemName, selectEl) {
+      let key = rawDate + "_" + itemName;
+      memoryEditedProduction[key] = { rawDate: rawDate, itemName: itemName, status: selectEl.value };
+    }
+
+    function trackWasteChangeInMemory(rawDate, itemName, selectEl) {
+      let key = rawDate + "_" + itemName;
+      memoryEditedWastage[key] = { rawDate: rawDate, itemName: itemName, status: selectEl.value };
+    }
+
     function switchActiveTab(target) {
       currentTab = target;
       document.getElementById("sidebarMenu").classList.remove("open");
@@ -285,7 +301,7 @@
     function reloadCurrentActiveGrid() {
       if (currentTab === 'orders') {
         document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
-        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; populateSupplierFilter(data); applyFilters('orders'); });
+        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; memoryEditedOrders = {}; populateSupplierFilter(data); applyFilters('orders'); });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
         localEditedItems = {}; localEditedStaff = {};
         document.getElementById("masterItemsTableBody").innerHTML = '<tr><td colspan="4">Syncing assets...</td></tr>';
@@ -298,10 +314,10 @@
         });
       } else if (currentTab === 'production') {
         document.getElementById("productionTableBody").innerHTML = '<tr><td colspan="6">Syncing production matrix...</td></tr>';
-        fetch(`${CORE_API_URL}?action=getProdHistory`).then(res => res.json()).then(data => { dbProduction = data; applyFilters('production'); });
+        fetch(`${CORE_API_URL}?action=getProdHistory`).then(res => res.json()).then(data => { dbProduction = data; memoryEditedProduction = {}; applyFilters('production'); });
       } else if (currentTab === 'wastage') {
         document.getElementById("wastageTableBody").innerHTML = '<tr><td colspan="7">Syncing damage log sheets...</td></tr>';
-        fetch(`${CORE_API_URL}?action=getWasteHistory`).then(res => res.json()).then(data => { dbWastage = data; applyFilters('wastage'); });
+        fetch(`${CORE_API_URL}?action=getWasteHistory`).then(res => res.json()).then(data => { dbWastage = data; memoryEditedWastage = {}; applyFilters('wastage'); });
       }
     }
 
@@ -377,9 +393,7 @@
       }
       
       let container = document.getElementById(targetDivId);
-      if (!container) return;
-      container.innerHTML = "";
-      
+      if (!container) return; container.innerHTML = "";
       if (totalPages <= 1) return;
       
       let prevBtn = `<button class="btn btn-outline-dark btn-sm" ${currPage===1?'disabled':''} onclick="changePage('${tabKey}', ${currPage-1})">Prev</button>`;
@@ -388,7 +402,6 @@
       let pagesHtml = "";
       let startPage = Math.max(1, currPage - 2);
       let endPage = Math.min(totalPages, startPage + 4);
-      
       for (let p = startPage; p <= endPage; p++) {
         pagesHtml += `<button class="btn ${p===currPage?'btn-dark':'btn-outline-dark'} btn-sm" onclick="changePage('${tabKey}', ${p})">${p}</button>`;
       }
@@ -411,29 +424,36 @@
       let end = start + PAGE_SIZE;
       let pageData = filteredOrders.slice(start, end);
       
-      pageData.forEach((row, idx) => {
-        let i = start + idx;
-        let sClass = row.status.toUpperCase() === 'RECEIVED' ? 'badge-received' : (row.status.toUpperCase() === 'ORDERED' ? 'badge-ordered' : 'badge-pending');
+      pageData.forEach((row) => {
+        let uniqueRowKey = row.rawDate + "_" + row.item;
+        let currentLiveState = memoryEditedOrders[uniqueRowKey] ? memoryEditedOrders[uniqueRowKey].status : row.status.toUpperCase();
+        let currentLiveDate = memoryEditedOrders[uniqueRowKey] ? memoryEditedOrders[uniqueRowKey].receivedDate : row.receivedDate;
+        let currentLiveRem = memoryEditedOrders[uniqueRowKey] ? memoryEditedOrders[uniqueRowKey].remarks : row.remarks;
+
+        let sClass = currentLiveState === 'RECEIVED' ? 'badge-received' : (currentLiveState === 'ORDERED' ? 'badge-ordered' : 'badge-pending');
+        let htmlSafeName = btoa(unescape(encodeURIComponent(row.item)));
+
         tbody.innerHTML += `
-          <tr class="order-data-row" data-ts="${row.rawDate}" data-name="${row.item}">
+          <tr class="order-data-row-node">
             <td><span class="text-muted small">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
-            <td><span class="badge-status ${sClass}">${row.status}</span></td>
-            <td><select class="form-select form-select-sm fw-bold row-status-selector" data-idx="${i}" onchange="toggleOrderDate(this)"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${row.status.toUpperCase()==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${row.status.toUpperCase()==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${row.status.toUpperCase()==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
-            <td><input type="date" id="o_date_${i}" class="form-control form-control-sm row-date-input" value="${row.receivedDate||""}" ${row.status.toUpperCase()!=='RECEIVED'?'disabled':''}></td>
-            <td><input type="text" id="o_rem_${i}" class="form-control form-control-sm row-remarks-input" value="${row.remarks||""}"></td>
+            <td><span class="badge-status ${sClass}">${currentLiveState}</span></td>
+            <td><select id="o_stat_${row.rawDate}_${htmlSafeName}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(this, '${row.rawDate}', '${row.item}')"><option value="PENDING" ${currentLiveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${currentLiveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${currentLiveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${currentLiveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
+            <td><input type="date" id="o_date_${row.rawDate}_${htmlSafeName}" class="form-control form-control-sm" value="${currentLiveDate||""}" ${currentLiveState!=='RECEIVED'?'disabled':''} onchange="trackOrderChangeInMemory('${row.rawDate}', '${row.item}')"></td>
+            <td><input type="text" id="o_rem_${row.rawDate}_${htmlSafeName}" class="form-control form-control-sm" value="${currentLiveRem||""}" oninput="trackOrderChangeInMemory('${row.rawDate}', '${row.item}')"></td>
           </tr>`;
       });
       setupPaginationControls(filteredOrders.length, 'orders', 'ordersPaginationBtns', 'ordersPageInfo');
     }
 
-    function toggleOrderDate(selectEl) {
-      let idx = selectEl.dataset.idx;
-      let dateInput = document.getElementById(`o_date_${idx}`);
+    function toggleOrderDate(selectEl, rawDate, itemName) {
+      let htmlSafeName = btoa(unescape(encodeURIComponent(itemName)));
+      let dateInput = document.getElementById(`o_date_${rawDate}_${htmlSafeName}`);
       dateInput.disabled = (selectEl.value !== "RECEIVED");
       if(selectEl.value === "RECEIVED" && !dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+      trackOrderChangeInMemory(rawDate, itemName);
     }
 
     function renderMasterItemsGrid() {
@@ -459,8 +479,10 @@
       let end = start + PAGE_SIZE;
       let pageData = filteredProduction.slice(start, end);
       
-      pageData.forEach((row, i) => {
-        tbody.innerHTML += `<tr class="prod-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold row-status-selector"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+      pageData.forEach((row) => {
+        let uniqueKey = row.rawDate + "_" + row.item;
+        let liveState = memoryEditedProduction[uniqueKey] ? memoryEditedProduction[uniqueKey].status : row.status.toUpperCase();
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="trackProdChangeInMemory('${row.rawDate}', '${row.item}', this)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
     }
@@ -473,8 +495,10 @@
       let end = start + PAGE_SIZE;
       let pageData = filteredWastage.slice(start, end);
       
-      pageData.forEach((row, i) => {
-        tbody.innerHTML += `<tr class="waste-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold row-status-selector"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+      pageData.forEach((row) => {
+        let uniqueKey = row.rawDate + "_" + row.item;
+        let liveState = memoryEditedWastage[uniqueKey] ? memoryEditedWastage[uniqueKey].status : row.status.toUpperCase();
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="trackWasteChangeInMemory('${row.rawDate}', '${row.item}', this)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
@@ -488,11 +512,9 @@
 
     let newItemCounter = 0;
     function addNewItemRowToGrid() {
-      newItemCounter++;
-      let tempId = `NEW_${newItemCounter}`;
+      newItemCounter++; let tempId = `NEW_${newItemCounter}`;
       const tbody = document.getElementById("masterItemsTableBody");
-      let row = document.createElement('tr');
-      row.id = `item_tr_${tempId}`;
+      let row = document.createElement('tr'); row.id = `item_tr_${tempId}`;
       row.innerHTML = `<td>+</td><td class="text-start editable-cell text-danger" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'name')">Click to add Name</td><td class="editable-cell text-danger fw-bold" onclick="toggleSupplierDropdownEdit(this, '${tempId}')">Select Supplier</td><td class="editable-cell text-danger" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'unit')">PCS</td>`;
       tbody.prepend(row);
       localEditedItems[tempId] = { rowId: "NEW", name: "Click to add Name", supplier: uniqueSuppliersList[0]||"Internal", unit: "PCS" };
@@ -500,39 +522,36 @@
 
     let newStaffCounter = 0;
     function addNewStaffRowToGrid() {
-      newStaffCounter++;
-      let tempId = `NEW_${newStaffCounter}`;
+      newStaffCounter++; let tempId = `NEW_${newStaffCounter}`;
       const tbody = document.getElementById("staffTableBody");
-      let row = document.createElement('tr');
-      row.id = `staff_tr_${tempId}`;
+      let row = document.createElement('tr'); row.id = `staff_tr_${tempId}`;
       row.innerHTML = `<td class="editable-cell fw-bold text-danger" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'code')">0000</td><td class="editable-cell text-danger" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'name')">Staff Name</td>`;
       tbody.prepend(row);
       localEditedStaff[tempId] = { rowId: "NEW", code: "0000", name: "Staff Name" };
     }
 
+    // 💾 কমপ্লিট ওয়ান-ক্লিক বাল্ক সেভ ট্রান্সমিটার (ইন-মেমোরি সেফ লজিক)
     function submitGlobalBulkChanges() {
       triggerToast("Engaging Bulk Data Lock Shuttles...");
       
       if (currentTab === 'orders' || currentTab === 'production' || currentTab === 'wastage') {
-        let payload = { action: "adminBulkSave", orders: [], production: [], wastage: [] };
+        let payload = { 
+          action: "adminBulkSave", 
+          orders: Object.values(memoryEditedOrders), 
+          production: Object.values(memoryEditedProduction), 
+          wastage: Object.values(memoryEditedWastage) 
+        };
         
-        document.querySelectorAll(".order-data-row").forEach((tr) => {
-          let stat = tr.querySelector('.row-status-selector').value;
-          let trIdx = tr.querySelector('.row-status-selector').dataset.idx;
-          let dateVal = document.getElementById(`o_date_${trIdx}`).value;
-          let rem = document.getElementById(`o_rem_${trIdx}`).value;
-          payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat, receivedDate: dateVal, remarks: rem });
-        });
-        document.querySelectorAll(".prod-data-row").forEach((tr) => {
-          let stat = tr.querySelector('.row-status-selector').value;
-          payload.production.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat });
-        });
-        document.querySelectorAll(".waste-data-row").forEach((tr) => {
-          let stat = tr.querySelector('.row-status-selector').value;
-          payload.wastage.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: stat });
-        });
+        if(payload.orders.length === 0 && payload.production.length === 0 && payload.wastage.length === 0) {
+          triggerToast("No modifications detected in log grids."); return;
+        }
         
-        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Operational Matrix Capped!"); reloadCurrentActiveGrid(); } });
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { 
+          if(d.status === "Success") { 
+            triggerToast("Operational Matrix Capped Successfully!"); 
+            reloadCurrentActiveGrid(); 
+          } 
+        });
       } 
       else if (currentTab === 'master-items') {
         let itemsPayload = Object.values(localEditedItems);
@@ -548,4 +567,3 @@
   </script>
 </body>
 </html>
-
