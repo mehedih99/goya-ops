@@ -62,7 +62,7 @@
     <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
     <input type="password" id="adminPinInput" class="form-control text-center form-control-lg fw-bold my-3" placeholder="••••" style="letter-spacing:6px;">
     <button class="btn btn-dark w-100 fw-bold" onclick="verifyAdminGate()">Unlock Panel</button>
-    <p id="gateError" class="text-danger mt-2 small d-none">Invalid Encryption PIN.</p>
+    <p id="gateError" class="text-danger mt-2 small d-none">Invalid PIN.</p>
   </div>
 
   <!-- WORKSPACE LAYOUT -->
@@ -94,7 +94,7 @@
           </div>
         </div>
 
-        <!-- TAB 1: ORDERS OVERRIDER PANEL WITH FILTERS -->
+        <!-- TAB 1: ORDERS OVERRIDER PANEL -->
         <div id="panel-orders" class="admin-tab-content">
           <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
@@ -122,7 +122,7 @@
         <div id="panel-master-items" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
-              <div class="col-md-8 col-12"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search among 400+ product lines inside grid..." oninput="filterMasterItemsGrid()"></div>
+              <div class="col-md-8 col-12"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines inside grid..." oninput="filterMasterItemsGrid()"></div>
               <div class="col-md-4 col-12 text-end"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Inject New Item Row</button></div>
             </div>
           </div>
@@ -179,7 +179,7 @@
 
   <script>
     const CORE_API_URL = "https://script.google.com/macros/s/AKfycbwOcyFSZL8fr5YDD9hsboZaLRyrJlrKUoiXlmi5GqBhommvz2lF8YdwRG0eGIz-yCBLiw/exec";
-    const MASTER_PIN = "3898";
+    const MASTER_PIN = "9988";
     
     let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
     let uniqueSuppliersList = [];
@@ -208,7 +208,6 @@
       cell.querySelector('input').focus();
     }
     
-    // 📦 সাপ্লায়ার এডিটের জন্য ডায়নামিক ড্রপডাউন জেনারেটর মেথড
     function toggleSupplierDropdownEdit(cell) {
       if (cell.querySelector('select') || cell.querySelector('input')) return;
       let currentVal = cell.innerText.trim();
@@ -289,7 +288,7 @@
         
         let tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
         filtered.forEach((row, i) => {
-          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-prod" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select id="p_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+          tbody.innerHTML += `<tr class="prod-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select id="p_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
         });
       } else if (mode === 'wastage') {
         let fDate = document.getElementById('wasteFilterDate').value;
@@ -305,7 +304,7 @@
         
         let tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
         filtered.forEach((row, i) => {
-          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-waste" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select id="w_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+          tbody.innerHTML += `<tr class="waste-data-row" data-ts="${row.rawDate}" data-name="${row.item}"><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select id="w_stat_${i}" class="form-select form-select-sm fw-bold"><option value="PENDING" ${row.status.toUpperCase()==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status.toUpperCase()==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
         });
       }
     }
@@ -370,6 +369,7 @@
       });
     }
 
+    // 💾 গ্লোবাল ওয়ান-ক্লিক বাল্ক সেভ ট্রান্সমিটার লুপ ফিক্সড মেথড
     function submitGlobalBulkChanges() {
       triggerToast("Engaging Bulk Data Lock Shuttles...");
       
@@ -379,11 +379,11 @@
         document.querySelectorAll(".order-data-row").forEach((tr, i) => {
           payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`o_stat_${i}`).value, receivedDate: document.getElementById(`o_date_${i}`).value, remarks: document.getElementById(`o_rem_${i}`).value });
         });
-        document.querySelectorAll(".data-row-prod").forEach((td, i) => {
-          payload.production.push({ rawDate: td.dataset.ts, itemName: td.dataset.name, status: document.getElementById(`p_stat_${i}`).value });
+        document.querySelectorAll(".prod-data-row").forEach((tr, i) => {
+          payload.production.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`p_stat_${i}`).value });
         });
-        document.querySelectorAll(".data-row-waste").forEach((td, i) => {
-          payload.wastage.push({ rawDate: td.dataset.ts, itemName: td.dataset.name, status: document.getElementById(`w_stat_${i}`).value });
+        document.querySelectorAll(".waste-data-row").forEach((tr, i) => {
+          payload.wastage.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`w_stat_${i}`).value });
         });
         
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Operational Matrix Capped!"); reloadCurrentActiveGrid(); } });
