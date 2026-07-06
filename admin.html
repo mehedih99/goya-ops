@@ -33,7 +33,6 @@
     .badge-received { background-color: #d1fae5; color: #065f46; }
     
     .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.85rem; }
-    
     #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
     
     @media (max-width: 768px) {
@@ -106,6 +105,7 @@
             </div>
           </div>
           <div class="data-card">
+            <p class="text-primary small fw-bold mb-2"><i class="bi bi-lightning-charge-fill"></i> Showing latest 30 days orders for maximum speed booster matrix.</p>
             <div class="table-responsive"><table class="table table-hover table-striped mb-0">
               <thead><tr><th>Submission Date</th><th class="text-start">Item Name</th><th>Quantity</th><th>Supplier</th><th>Current State</th><th>Change Action</th><th>Received Date</th><th>Remarks / Notes</th></tr></thead>
               <tbody id="ordersTableBody"><tr><td colspan="8" class="text-muted p-4">Loading operational blocks...</td></tr></tbody>
@@ -185,10 +185,9 @@
     let filteredOrders = [], filteredMasterItems = [], filteredProduction = [], filteredWastage = [];
     let uniqueSuppliersList = [];
     let currentTab = 'orders';
-    
     let currentPages = { orders: 1, 'master-items': 1, production: 1, wastage: 1 };
     
-    // 🚀 মেমোরি চেঞ্জ ট্র্যাকার্স (সব পেজের জন্য ইন-মেমোরি লক মেথড)
+    // 💾 REALTIME MEMORY LOGGERS
     let memoryEditedOrders = {};
     let memoryEditedProduction = {};
     let memoryEditedWastage = {};
@@ -258,24 +257,29 @@
       localEditedItems[rowId]['supplier'] = val;
     }
 
-    function trackOrderChangeInMemory(rawDate, itemName) {
+    // ⭐ LIVE CELL TRACKERS IN MEMORY (Direct Binding)
+    function captureLiveOrderState(rawDate, itemName, htmlSafeName) {
       let key = rawDate + "_" + itemName;
-      let origRow = dbOrders.find(r => r.rawDate === rawDate && r.item === itemName);
-      if(!origRow) return;
-
-      let stat = document.getElementById(`o_stat_${rawDate}_${btoa(unescape(encodeURIComponent(itemName)))}`).value;
-      let rDate = document.getElementById(`o_date_${rawDate}_${btoa(unescape(encodeURIComponent(itemName)))}`).value;
-      let rem = document.getElementById(`o_rem_${rawDate}_${btoa(unescape(encodeURIComponent(itemName)))}`).value;
-
+      let stat = document.getElementById(`o_stat_${rawDate}_${htmlSafeName}`).value;
+      let rDate = document.getElementById(`o_date_${rawDate}_${htmlSafeName}`).value;
+      let rem = document.getElementById(`o_rem_${rawDate}_${htmlSafeName}`).value;
+      
       memoryEditedOrders[key] = { rawDate: rawDate, itemName: itemName, status: stat, receivedDate: rDate, remarks: rem };
     }
 
-    function trackProdChangeInMemory(rawDate, itemName, selectEl) {
+    function captureLiveOrderDateToggle(selectEl, rawDate, itemName, htmlSafeName) {
+      let dateInput = document.getElementById(`o_date_${rawDate}_${htmlSafeName}`);
+      dateInput.disabled = (selectEl.value !== "RECEIVED");
+      if(selectEl.value === "RECEIVED" && !dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+      captureLiveOrderState(rawDate, itemName, htmlSafeName);
+    }
+
+    function captureLiveProdState(rawDate, itemName, selectEl) {
       let key = rawDate + "_" + itemName;
       memoryEditedProduction[key] = { rawDate: rawDate, itemName: itemName, status: selectEl.value };
     }
 
-    function trackWasteChangeInMemory(rawDate, itemName, selectEl) {
+    function captureLiveWasteState(rawDate, itemName, selectEl) {
       let key = rawDate + "_" + itemName;
       memoryEditedWastage[key] = { rawDate: rawDate, itemName: itemName, status: selectEl.value };
     }
@@ -301,7 +305,14 @@
     function reloadCurrentActiveGrid() {
       if (currentTab === 'orders') {
         document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
-        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; memoryEditedOrders = {}; populateSupplierFilter(data); applyFilters('orders'); });
+        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { 
+          // ⚡ SPEED ACCELERATOR: Filter only latest 30 days orders for raw memory load
+          let limitTs = Date.now() - (30 * 24 * 60 * 60 * 1000);
+          dbOrders = data.filter(r => parseFloat(r.rawDate) > limitTs);
+          memoryEditedOrders = {}; 
+          populateSupplierFilter(dbOrders); 
+          applyFilters('orders'); 
+        });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
         localEditedItems = {}; localEditedStaff = {};
         document.getElementById("masterItemsTableBody").innerHTML = '<tr><td colspan="4">Syncing assets...</td></tr>';
@@ -434,26 +445,18 @@
         let htmlSafeName = btoa(unescape(encodeURIComponent(row.item)));
 
         tbody.innerHTML += `
-          <tr class="order-data-row-node">
+          <tr>
             <td><span class="text-muted small">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
             <td><span class="badge-status ${sClass}">${currentLiveState}</span></td>
-            <td><select id="o_stat_${row.rawDate}_${htmlSafeName}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(this, '${row.rawDate}', '${row.item}')"><option value="PENDING" ${currentLiveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${currentLiveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${currentLiveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${currentLiveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
-            <td><input type="date" id="o_date_${row.rawDate}_${htmlSafeName}" class="form-control form-control-sm" value="${currentLiveDate||""}" ${currentLiveState!=='RECEIVED'?'disabled':''} onchange="trackOrderChangeInMemory('${row.rawDate}', '${row.item}')"></td>
-            <td><input type="text" id="o_rem_${row.rawDate}_${htmlSafeName}" class="form-control form-control-sm" value="${currentLiveRem||""}" oninput="trackOrderChangeInMemory('${row.rawDate}', '${row.item}')"></td>
+            <td><select id="o_stat_${row.rawDate}_${htmlSafeName}" class="form-select form-select-sm fw-bold" onchange="captureLiveOrderDateToggle(this, '${row.rawDate}', '${row.item}', '${htmlSafeName}')"><option value="PENDING" ${currentLiveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${currentLiveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${currentLiveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${currentLiveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
+            <td><input type="date" id="o_date_${row.rawDate}_${htmlSafeName}" class="form-control form-control-sm" value="${currentLiveDate||""}" ${currentLiveState!=='RECEIVED'?'disabled':''} onchange="captureLiveOrderState('${row.rawDate}', '${row.item}', '${htmlSafeName}')"></td>
+            <td><input type="text" id="o_rem_${row.rawDate}_${htmlSafeName}" class="form-control form-control-sm" value="${currentLiveRem||""}" oninput="captureLiveOrderState('${row.rawDate}', '${row.item}', '${htmlSafeName}')"></td>
           </tr>`;
       });
       setupPaginationControls(filteredOrders.length, 'orders', 'ordersPaginationBtns', 'ordersPageInfo');
-    }
-
-    function toggleOrderDate(selectEl, rawDate, itemName) {
-      let htmlSafeName = btoa(unescape(encodeURIComponent(itemName)));
-      let dateInput = document.getElementById(`o_date_${rawDate}_${htmlSafeName}`);
-      dateInput.disabled = (selectEl.value !== "RECEIVED");
-      if(selectEl.value === "RECEIVED" && !dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
-      trackOrderChangeInMemory(rawDate, itemName);
     }
 
     function renderMasterItemsGrid() {
@@ -482,7 +485,7 @@
       pageData.forEach((row) => {
         let uniqueKey = row.rawDate + "_" + row.item;
         let liveState = memoryEditedProduction[uniqueKey] ? memoryEditedProduction[uniqueKey].status : row.status.toUpperCase();
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="trackProdChangeInMemory('${row.rawDate}', '${row.item}', this)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="captureLiveProdState('${row.rawDate}', '${row.item}', this)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
     }
@@ -498,7 +501,7 @@
       pageData.forEach((row) => {
         let uniqueKey = row.rawDate + "_" + row.item;
         let liveState = memoryEditedWastage[uniqueKey] ? memoryEditedWastage[uniqueKey].status : row.status.toUpperCase();
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="trackWasteChangeInMemory('${row.rawDate}', '${row.item}', this)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="captureLiveWasteState('${row.rawDate}', '${row.item}', this)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
@@ -506,7 +509,7 @@
     function renderStaffGrid(list) {
       const tbody = document.getElementById("staffTableBody"); tbody.innerHTML = "";
       list.forEach(st => {
-        tbody.innerHTML += `<tr id="staff_tr_${st.rowId}"><td class="editable-cell fw-bold text-primary" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'code')">${st.code}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'name')">${st.name}</td></tr>`;
+        tbody.innerHTML += `<tr id="staff_tr_${st.rowId}"><td class="editable-cell fw-bold text-primary" onclick="toggleCellToEdit(this, 'staff', '${st.st.rowId}', 'code')">${st.code}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'name')">${st.name}</td></tr>`;
       });
     }
 
@@ -530,7 +533,7 @@
       localEditedStaff[tempId] = { rowId: "NEW", code: "0000", name: "Staff Name" };
     }
 
-    // 💾 কমপ্লিট ওয়ান-ক্লিক বাল্ক সেভ ট্রান্সমিটার (ইন-মেমোরি সেফ লজিক)
+    // 💾 ULTRA HIGH SPEED DATA TRANSMITTER (100% SUCCESS MATRIX)
     function submitGlobalBulkChanges() {
       triggerToast("Engaging Bulk Data Lock Shuttles...");
       
@@ -543,12 +546,13 @@
         };
         
         if(payload.orders.length === 0 && payload.production.length === 0 && payload.wastage.length === 0) {
-          triggerToast("No modifications detected in log grids."); return;
+          triggerToast("No pending edits captured in memory."); return;
         }
         
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { 
           if(d.status === "Success") { 
-            triggerToast("Operational Matrix Capped Successfully!"); 
+            triggerToast("Operational Matrix Capped!"); 
+            memoryEditedOrders = {}; memoryEditedProduction = {}; memoryEditedWastage = {};
             reloadCurrentActiveGrid(); 
           } 
         });
