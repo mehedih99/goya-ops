@@ -7,202 +7,164 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    :root {
-      --goya-bg: #d1d1d3;
-      --goya-dark: #1f4e78;
-      --goya-accent: #153552;
-    }
-    body { background-color: var(--goya-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333333; overflow-x: hidden; }
+    :root { --goya-bg: #d1d1d3; --goya-dark: #1f4e78; --goya-accent: #153552; }
+    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: #333; min-height: 100vh; }
     
-    .gate-container { max-width: 420px; margin: 120px auto; background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-    .gate-icon { font-size: 3.5rem; color: var(--goya-dark); margin-bottom: 15px; }
+    .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
     
-    .sidebar { background-color: #ffffff; min-height: 100vh; box-shadow: 4px 0 15px rgba(0,0,0,0.03); padding: 25px 20px; border-right: 1px solid rgba(0,0,0,0.05); }
+    /* Responsive Navigation Layout */
+    .top-navbar { background-color: var(--goya-dark); color: white; display: none; padding: 12px 20px; align-items: center; justify-content: space-between; }
+    .sidebar { background-color: white; min-height: 100vh; padding: 25px 15px; box-shadow: 4px 0 15px rgba(0,0,0,0.02); }
     .main-content { padding: 30px; }
-    .brand-title { font-weight: 700; color: var(--goya-dark); letter-spacing: 1px; font-size: 1.25rem; }
     
-    .data-card { background: #ffffff; border-radius: 14px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: none; margin-bottom: 25px; }
-    .table-responsive { border-radius: 10px; overflow: hidden; border: 1px solid #dee2e6; background: #fff; }
-    
-    .table th { background-color: var(--goya-dark) !important; color: white !important; font-weight: 600; text-align: center; font-size: 0.82rem; padding: 12px 8px; }
-    .table td { vertical-align: middle; text-align: center; font-size: 0.82rem; padding: 10px 8px; white-space: nowrap; }
-    
-    .badge-status { padding: 5px 10px; border-radius: 30px; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; display: inline-block; }
-    .badge-pending { background-color: #fee2e2; color: #991b1b; }
-    .badge-ordered { background-color: #fef3c7; color: #92400e; }
-    .badge-received { background-color: #d1fae5; color: #065f46; }
-    .badge-notreceived { background-color: #f3e8ff; color: #6b21a8; }
-    .badge-done { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-    
-    .form-control-sm, .form-select-sm { border-radius: 6px; border: 1px solid #ced4da; font-size: 0.82rem; }
-    .btn-save { background-color: var(--goya-dark); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; transition: all 0.2s; }
-    .btn-save:hover { background-color: var(--goya-accent); }
-    
-    .nav-custom .nav-link { color: #555; font-weight: 600; border-radius: 8px; padding: 10px 15px; margin-bottom: 5px; text-align: left; transition: all 0.2s; width: 100%; }
+    .nav-custom .nav-link { color: #444; font-weight: 600; border-radius: 8px; padding: 11px 14px; margin-bottom: 6px; text-align: left; width: 100%; transition: all 0.2s; }
     .nav-custom .nav-link.active { background-color: var(--goya-dark) !important; color: white !important; }
-    .nav-custom .nav-link:hover:not(.active) { background-color: #f1f3f5; color: var(--goya-dark); }
     
-    #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none; min-width: 300px; border-radius: 10px; }
+    .data-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 25px; border: none; }
+    .table-responsive { border-radius: 10px; overflow-x: auto; border: 1px solid #dee2e6; background: white; -webkit-overflow-scrolling: touch; }
+    .table th { background-color: var(--goya-dark) !important; color: white !important; font-size: 0.82rem; padding: 12px 8px; text-align: center; }
+    .table td { vertical-align: middle; text-align: center; font-size: 0.82rem; padding: 8px; white-space: nowrap; }
+    
+    .editable-cell { cursor: pointer; background-color: #fffde7; font-weight: 500; transition: background 0.2s; }
+    .editable-cell:hover { background-color: #fff9c4; }
+    .cell-input { width: 100%; border: 1px solid var(--goya-dark); border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; }
+    
+    .badge-status { padding: 4px 8px; border-radius: 30px; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; }
+    .badge-pending { background-color: #fee2e2; color: #991b1b; }
+    .badge-received { background-color: #d1fae5; color: #065f46; }
+    
+    #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
+    
+    @media (max-width: 768px) {
+      .sidebar { display: none; position: fixed; top: 55px; left: 0; width: 260px; z-index: 9999; height: calc(100vh - 55px); box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+      .sidebar.open { display: block; }
+      .top-navbar { display: flex; position: fixed; top: 0; left: 0; right: 0; height: 55px; z-index: 10000; }
+      .main-content { padding: 15px; margin-top: 55px; }
+      body { background-color: #f4f5f7; }
+    }
   </style>
 </head>
 <body>
 
-  <div id="toastAlert" class="alert alert-dark shadow-lg text-white bg-dark border-0 align-items-center" role="alert">
-    <div class="d-flex p-2">
-      <i class="bi bi-info-circle-fill me-2"></i>
-      <div id="toastMessage" class="flex-grow-1">Sync Engine Engaged.</div>
-    </div>
+  <!-- MOBILE HEADER BAR -->
+  <div class="top-navbar">
+    <span class="fw-bold m-0"><i class="bi bi-cpu-fill me-1"></i> GOYA CORE</span>
+    <button class="btn btn-sm btn-outline-light" onclick="toggleMobileSidebar()"><i class="bi bi-list fs-5"></i></button>
   </div>
 
+  <div id="toastAlert" class="alert alert-dark shadow text-white bg-dark border-0 p-3" role="alert">
+    <div class="d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i><div id="toastMessage">Sync Mode Engine Active.</div></div>
+  </div>
+
+  <!-- GATE -->
   <div id="pinGate" class="gate-container">
-    <div class="gate-icon"><i class="bi bi-shield-lock-fill"></i></div>
-    <h4 class="fw-bold mb-2">GOYA CORE ADMINISTRATION</h4>
-    <p class="text-muted small mb-4">Input Master Authentication PIN to build connection grid</p>
-    <div class="mb-3">
-      <input type="password" id="adminPinInput" class="form-control text-center form-control-lg fw-bold" placeholder="••••" style="letter-spacing: 6px; font-size: 1.5rem;">
-    </div>
-    <button class="btn btn-dark w-100 btn-lg fw-bold" onclick="verifyAdminGate()">Unlock Console</button>
-    <p id="gateError" class="text-danger mt-3 small d-none"><i class="bi bi-exclamation-triangle-fill"></i> Access Denied. Invalid PIN.</p>
+    <div class="fs-1 text-primary mb-2"><i class="bi bi-shield-lock-fill"></i></div>
+    <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
+    <input type="password" id="adminPinInput" class="form-control text-center form-control-lg fw-bold my-3" placeholder="••••" style="letter-spacing:6px;">
+    <button class="btn btn-dark w-100 fw-bold" onclick="verifyAdminGate()">Unlock Panel</button>
+    <p id="gateError" class="text-danger mt-2 small d-none">Invalid Encryption PIN.</p>
   </div>
 
+  <!-- WORKSPACE -->
   <div id="adminPanel" class="container-fluid d-none">
     <div class="row">
       
-      <div class="col-md-3 col-lg-2 sidebar">
-        <div class="d-flex align-items-center mb-4 pb-2 border-bottom">
-          <i class="bi bi-cpu-fill text-primary fs-4 me-2"></i>
-          <span class="brand-title">GOYA CORE</span>
+      <!-- NAVIGATION SIDEBAR -->
+      <div id="sidebarMenu" class="col-md-3 col-lg-2 sidebar">
+        <div class="d-none d-md-flex align-items-center mb-4 pb-2 border-bottom">
+          <i class="bi bi-cpu-fill text-primary fs-5 me-2"></i><span class="brand-title">GOYA CORE</span>
         </div>
-        <p class="text-muted small text-transform uppercase fw-bold mb-2">Operational Controls</p>
-        
-        <div class="nav flex-column nav-pills nav-custom" id="v-pills-tab" role="tablist">
+        <div class="nav flex-column nav-pills nav-custom">
           <button class="nav-link active" onclick="switchActiveTab('orders')"><i class="bi bi-cart-check me-2"></i> Orders Overrider</button>
           <button class="nav-link" onclick="switchActiveTab('master-items')"><i class="bi bi-box-seam me-2"></i> Master Items Manager</button>
           <button class="nav-link" onclick="switchActiveTab('staff-dir')"><i class="bi bi-people me-2"></i> Staff Directory</button>
           <button class="nav-link" onclick="switchActiveTab('production')"><i class="bi bi-soup-bowl me-2"></i> Foodics Production</button>
           <button class="nav-link" onclick="switchActiveTab('wastage')"><i class="bi bi-trash3 me-2"></i> Foodics Wastage</button>
         </div>
-
-        <div class="pt-4 mt-4 border-top">
-          <button class="btn btn-danger btn-sm w-100" onclick="location.reload()"><i class="bi bi-box-arrow-left me-1"></i> Lock Console</button>
-        </div>
+        <button class="btn btn-sm btn-danger w-100 mt-5" onclick="location.reload()">Lock Console</button>
       </div>
 
+      <!-- INTERACTIVE STAGE -->
       <div class="col-md-9 col-lg-10 main-content">
-        
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 g-2">
+          <h3 id="stageTitle" class="fw-bold m-0 text-dark">Orders Overrider Panel</h3>
+          <div class="d-flex align-items-center g-2">
+            <button class="btn btn-success fw-bold btn-sm px-3 me-2 shadow-sm" onclick="submitGlobalBulkChanges()"><i class="bi bi-cloud-check-fill me-1"></i> Save All Changes</button>
+            <button class="btn btn-white border bg-white shadow-sm btn-sm px-3" onclick="reloadCurrentActiveGrid()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+          </div>
+        </div>
+
+        <!-- TAB 1: ORDERS OVERRIDER VIEW -->
         <div id="panel-orders" class="admin-tab-content">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h2 class="fw-bold m-0 text-dark">Live Orders Overrider</h2>
-              <p class="text-muted m-0 small">Override states and update notes dynamically inside row cells.</p>
-            </div>
-            <button class="btn btn-white border bg-white shadow-sm fw-bold btn-sm px-3 py-2" onclick="loadDataGrid('orders')"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-          </div>
-
-          <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
-            <div class="row g-2">
-              <div class="col-md-3 col-6"><label class="form-label fw-bold text-secondary mb-1">📅 Order Date</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
-              <div class="col-md-3 col-6"><label class="form-label fw-bold text-secondary mb-1">📦 Supplier</label><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
-              <div class="col-md-3 col-6"><label class="form-label fw-bold text-secondary mb-1">⏳ Current State</label><select id="ordFilterStatus" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Status</option><option value="PENDING">PENDING</option><option value="ORDERED">ORDERED</option><option value="RECEIVED">RECEIVED</option><option value="NOT RECEIVED">NOT RECEIVED</option></select></div>
-              <div class="col-md-3 col-6"><label class="form-label fw-bold text-secondary mb-1">✅ Received Date</label><input type="date" id="ordFilterRecDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
+          <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-3 col-6"><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
+              <div class="col-md-3 col-6"><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
+              <div class="col-md-3 col-6">
+                <div class="form-check form-switch m-0 pt-1">
+                  <input class="form-check-input" type="checkbox" id="ordPendingToggle" onchange="applyFilters('orders')">
+                  <label class="form-check-label fw-bold text-danger" for="ordPendingToggle">⚠️ Show Pending Only</label>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0 align-middle">
+          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
             <thead>
-              <tr><th>Submission Date</th><th class="text-start">Item Name</th><th>Quantity</th><th>Supplier</th><th>Current State</th><th>Change Action</th><th>Received Date</th><th>Remarks / Notes</th><th>Commit</th></tr>
+              <tr><th>Submission Date</th><th class="text-start">Item Name</th><th>Quantity</th><th>Supplier</th><th>Current State</th><th>Change Action</th><th>Received Date</th><th>Remarks / Notes</th></tr>
             </thead>
-            <tbody id="ordersTableBody"><tr><td colspan="9" class="text-muted p-4">Loading operational blocks...</td></tr></tbody>
+            <tbody id="ordersTableBody"><tr><td colspan="8" class="text-muted p-4">Loading operational blocks...</td></tr></tbody>
           </table></div></div>
         </div>
 
+        <!-- TAB 2: MASTER ITEMS INTERACTIVE MANAGER -->
         <div id="panel-master-items" class="admin-tab-content d-none">
-          <h2 class="fw-bold text-dark mb-1">Master Items Manager</h2>
-          <p class="text-muted small mb-4">Directly append new product lines to the Master_Items sheet grid.</p>
-          
-          <div class="card p-4 bg-white border shadow-sm rounded-3 mb-4" style="max-width: 600px;">
-            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-plus-circle-fill me-1"></i> Add New Product Item</h5>
-            <div class="mb-3">
-              <label class="form-label">Item Name</label>
-              <input type="text" id="newMasterItemName" class="form-control" placeholder="e.g. Acai Puree 1KG">
+          <div class="card p-3 bg-white border shadow-sm mb-3">
+            <div class="row g-2 align-items-center">
+              <div class="col-md-8 col-12"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search among 400+ product lines inside grid..." oninput="filterMasterItemsGrid()"></div>
+              <div class="col-md-4 col-12 text-end"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Inject New Item Row</button></div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Supplier Name</label>
-              <input type="text" id="newMasterItemSupplier" class="form-control" placeholder="e.g. Amazonas4u / Internal">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Units (Comma separated if multiple)</label>
-              <input type="text" id="newMasterItemUnit" class="form-control" placeholder="e.g. PCS, KG, BOX">
-            </div>
-            <button class="btn btn-primary w-100 fw-bold" onclick="submitNewMasterItem()">🚀 Add Product Line</button>
+          </div>
+          <div class="data-card">
+            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click any text cell below to edit directly. Hit "Save All Changes" on top when done.</p>
+            <div class="table-responsive" style="max-height: 550px;"><table class="table table-hover table-bordered table-striped mb-0">
+              <thead class="sticky-top"><tr><th>#</th><th class="text-start">Item Name</th><th>Supplier Name</th><th>Units Pattern</th><th>Action</th></tr></thead>
+              <tbody id="masterItemsTableBody"><tr><td colspan="5" class="text-muted p-4">Awaiting grid synchronization...</td></tr></tbody>
+            </table></div>
           </div>
         </div>
 
+        <!-- TAB 3: STAFF DIRECTORY INTERACTIVE MANAGER -->
         <div id="panel-staff-dir" class="admin-tab-content d-none">
-          <h2 class="fw-bold text-dark mb-1">Staff Directory Portal</h2>
-          <p class="text-muted small mb-4">Authorize or append new staff identities and unique login codes.</p>
-          
-          <div class="card p-4 bg-white border shadow-sm rounded-3 mb-4" style="max-width: 600px;">
-            <h5 class="fw-bold mb-3 text-success"><i class="bi bi-person-plus-fill me-1"></i> Register New Staff Profile</h5>
-            <div class="mb-3">
-              <label class="form-label">Secret PIN Code</label>
-              <input type="number" id="newStaffCode" class="form-control text-center fw-bold" placeholder="e.g. 1234" style="letter-spacing:3px;">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Full Staff Name</label>
-              <input type="text" id="newStaffName" class="form-control" placeholder="e.g. Obama / Goalde">
-            </div>
-            <button class="btn btn-success w-100 fw-bold" onclick="submitNewStaff()">🔑 Issue Staff Credentials</button>
+          <div class="text-end mb-3"><button class="btn btn-success btn-sm fw-bold" onclick="addNewStaffRowToGrid()">+ Inject New Staff Profile</button></div>
+          <div class="data-card">
+            <p class="text-danger small fw-bold mb-2"><i class="bi bi-info-circle"></i> Click code or name cells below to update parameters directly.</p>
+            <div class="table-responsive"><table class="table table-hover table-bordered table-striped mb-0">
+              <thead><tr><th>Secret Login PIN</th><th>Staff Identity Label</th><th>Action</th></tr></thead>
+              <tbody id="staffTableBody"><tr><td colspan="3" class="text-muted p-4">Awaiting access grid...</td></tr></tbody>
+            </table></div>
           </div>
         </div>
 
+        <!-- TAB 4 & 5: PRODUCTION AND WASTAGE CONTROL PANEL -->
         <div id="panel-production" class="admin-tab-content d-none">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h2 class="fw-bold m-0 text-dark">Production Foodics Checklist</h2>
-              <p class="text-muted m-0 small">Cross check batch entries and check mark submissions inside Foodics panel.</p>
-            </div>
-            <button class="btn btn-white border bg-white shadow-sm fw-bold btn-sm px-3 py-2" onclick="loadDataGrid('production')"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-          </div>
-
-          <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
-            <div class="row g-2">
-              <div class="col-md-4 col-6"><label class="form-label fw-bold text-secondary mb-1">📅 Filter by Prep Date</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
-              <div class="col-md-4 col-6"><label class="form-label fw-bold text-secondary mb-1">⚙️ Foodics Sync State</label><select id="prodFilterStatus" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All Logs</option><option value="PENDING">PENDING (Unsubmitted)</option><option value="DONE">DONE (Submitted to Foodics)</option></select></div>
-              <div class="col-md-4 col-12"><label class="form-label fw-bold text-secondary mb-1">🔍 Search Prep Item</label><input type="text" id="prodFilterSearch" class="form-control form-control-sm" placeholder="Search item name..." oninput="applyFilters('production')"></div>
-            </div>
-          </div>
-
-          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0 align-middle">
-            <thead>
-              <tr><th>Prep Date & Time</th><th class="text-start">Prep Item Bundle</th><th>Quantity</th><th>Unit</th><th>Submitted By</th><th>Foodics Sync State</th><th>Commit</th></tr>
-            </thead>
-            <tbody id="productionTableBody"><tr><td colspan="7" class="text-muted p-4">Loading production records...</td></tr></tbody>
+          <div class="card p-2 bg-white border mb-3"><div class="row g-2">
+            <div class="col-md-6"><input type="text" id="prodSearch" class="form-control form-control-sm" placeholder="🔍 Search production items..." oninput="applyFilters('production')"></div>
+            <div class="col-md-6"><select id="prodStatusFilter" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All State</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+          </div></div>
+          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
+            <thead><tr><th>Prep Date & Time</th><th class="text-start">Prep Item</th><th>Quantity</th><th>Unit</th><th>Submitted By</th><th>Sync State</th></tr></thead>
+            <tbody id="productionTableBody"></tbody>
           </table></div></div>
         </div>
 
         <div id="panel-wastage" class="admin-tab-content d-none">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h2 class="fw-bold m-0 text-dark">Wastage Foodics Checklist</h2>
-              <p class="text-muted m-0 small">Cross check loss logs and mark done when submitted inside foodics console.</p>
-            </div>
-            <button class="btn btn-white border bg-white shadow-sm fw-bold btn-sm px-3 py-2" onclick="loadDataGrid('wastage')"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-          </div>
-
-          <div class="card p-3 mb-3 bg-white border shadow-sm rounded-3" style="font-size:0.85rem;">
-            <div class="row g-2">
-              <div class="col-md-4 col-6"><label class="form-label fw-bold text-secondary mb-1">📅 Filter by Waste Date</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
-              <div class="col-md-4 col-6"><label class="form-label fw-bold text-secondary mb-1">⚙️ Foodics Sync State</label><select id="wasteFilterStatus" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All Logs</option><option value="PENDING">PENDING (Unsubmitted)</option><option value="DONE">DONE (Submitted to Foodics)</option></select></div>
-              <div class="col-md-4 col-12"><label class="form-label fw-bold text-secondary mb-1">🔍 Search Waste Item</label><input type="text" id="wasteFilterSearch" class="form-control form-control-sm" placeholder="Search item name..." oninput="applyFilters('wastage')"></div>
-            </div>
-          </div>
-
-          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0 align-middle">
-            <thead>
-              <tr><th>Waste Date & Time</th><th class="text-start">Item Name</th><th>Quantity</th><th>Unit</th><th>Reason for Waste</th><th>Logged By</th><th>Foodics Sync State</th><th>Commit</th></tr>
-            </thead>
-            <tbody id="wastageTableBody"><tr><td colspan="8" class="text-muted p-4">Loading wastage logs...</td></tr></tbody>
+          <div class="card p-2 bg-white border mb-3"><div class="row g-2">
+            <div class="col-md-6"><input type="text" id="wasteSearch" class="form-control form-control-sm" placeholder="🔍 Search wastage items..." oninput="applyFilters('wastage')"></div>
+            <div class="col-md-6"><select id="wasteStatusFilter" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All State</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+          </div></div>
+          <div class="data-card"><div class="table-responsive"><table class="table table-hover table-striped mb-0">
+            <thead><tr><th>Waste Date & Time</th><th class="text-start">Item Name</th><th>Quantity</th><th>Unit</th><th>Reason</th><th>Logged By</th><th>Sync State</th></tr></thead>
+            <tbody id="wastageTableBody"></tbody>
           </table></div></div>
         </div>
 
@@ -211,16 +173,16 @@
   </div>
 
   <script>
-    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbxCvTcId4zaiWU6bkQB-dPq4wKdqLgnWsMFggsyfvmhkLvh6hcCaOTK8T7t29cI0Ky5vA/exec";
+    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbwOcyFSZL8fr5YDD9hsboZaLRyrJlrKUoiXlmi5GqBhommvz2lF8YdwRG0eGIz-yCBLiw/exec";
     const MASTER_PIN = "9988";
     
-    let dbOrders = [], dbProduction = [], dbWastage = [];
+    let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
+    let currentTab = 'orders';
 
     function triggerToast(msg) {
       const toast = document.getElementById("toastAlert");
       document.getElementById("toastMessage").innerText = msg;
-      toast.style.display = "flex";
-      setTimeout(() => { toast.style.display = "none"; }, 4000);
+      toast.style.display = "block"; setTimeout(() => { toast.style.display = "none"; }, 3500);
     }
 
     function verifyAdminGate() {
@@ -228,60 +190,47 @@
         document.getElementById("pinGate").classList.add("d-none");
         document.getElementById("adminPanel").classList.remove("d-none");
         loadDataGrid('orders');
-      } else {
-        document.getElementById("gateError").classList.remove("d-none");
-      }
+      } else { document.getElementById("gateError").classList.remove("d-none"); }
     }
 
+    function toggleMobileSidebar() { document.getElementById("sidebarMenu").classList.toggle("open"); }
+    function toggleCellToEdit(cell) {
+      if (cell.querySelector('input')) return;
+      let currentVal = cell.innerText.trim();
+      cell.innerHTML = `<input type="text" class="cell-input" value="${currentVal}" onblur="closeCellEdit(this)" onkeydown="if(event.key==='Enter') this.blur()">`;
+      cell.querySelector('input').focus();
+    }
+    function closeCellEdit(input) { let val = input.value.trim(); let p = input.parentElement; p.innerText = val || "-"; }
+
     function switchActiveTab(target) {
+      currentTab = target;
+      document.getElementById("sidebarMenu").classList.remove("open");
       document.querySelectorAll(".admin-tab-content").forEach(el => el.classList.add("d-none"));
       document.querySelectorAll(".nav-custom .nav-link").forEach(el => el.classList.remove("active"));
       
       document.getElementById(`panel-${target}`).classList.remove("d-none");
       event.currentTarget.classList.add("active");
       
-      if(target === 'orders' || target === 'production' || target === 'wastage') {
-        loadDataGrid(target);
-      }
+      let titles = { 'orders': 'Orders Overrider Panel', 'master-items': 'Master Items Asset Grid (400+ lines)', 'staff-dir': 'Staff Credentials Hub', 'production': 'Production Batch Log Check', 'wastage': 'Wastage Damage Log Check' };
+      document.getElementById("stageTitle").innerText = titles[target];
+      reloadCurrentActiveGrid();
     }
 
-    function loadDataGrid(mode) {
-      if (mode === 'orders') {
-        const tbody = document.getElementById("ordersTableBody");
-        tbody.innerHTML = `<tr><td colspan="9" class="text-primary p-3"><div class="spinner-border spinner-border-sm me-2"></div>Fetching core order rows...</td></tr>`;
-        fetch(`${CORE_API_URL}?action=getHistory`)
-          .then(res => res.json())
-          .then(data => {
-            dbOrders = data;
-            populateSupplierFilter(data);
-            applyFilters('orders');
-          });
-      }
-      else if (mode === 'production') {
-        const tbody = document.getElementById("productionTableBody");
-        tbody.innerHTML = `<tr><td colspan="7" class="text-info p-3"><div class="spinner-border spinner-border-sm me-2"></div>Fetching production logs...</td></tr>`;
-        fetch(`${CORE_API_URL}?action=getProdHistory`)
-          .then(res => res.json())
-          .then(data => {
-            dbProduction = data;
-            applyFilters('production');
-          });
-      }
-      else if (mode === 'wastage') {
-        const tbody = document.getElementById("wastageTableBody");
-        tbody.innerHTML = `<tr><td colspan="8" class="text-danger p-3"><div class="spinner-border spinner-border-sm me-2"></div>Fetching wastage logs...</td></tr>`;
-        fetch(`${CORE_API_URL}?action=getWasteHistory`)
-          .then(res => res.json())
-          .then(data => {
-            dbWastage = data;
-            applyFilters('wastage');
-          });
+    function reloadCurrentActiveGrid() {
+      if (currentTab === 'orders') {
+        document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
+        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; populateSupplierFilter(data); applyFilters('orders'); });
+      } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
+        fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { dbMasterItems = data.items; dbStaffList = data.staffList; renderMasterItemsGrid(dbMasterItems); renderStaffGrid(dbStaffList); });
+      } else if (currentTab === 'production') {
+        fetch(`${CORE_API_URL}?action=getProdHistory`).then(res => res.json()).then(data => { dbProduction = data; applyFilters('production'); });
+      } else if (currentTab === 'wastage') {
+        fetch(`${CORE_API_URL}?action=getWasteHistory`).then(res => res.json()).then(data => { dbWastage = data; applyFilters('wastage'); });
       }
     }
 
     function populateSupplierFilter(data) {
-      let select = document.getElementById('ordFilterSupplier');
-      select.innerHTML = '<option value="">All Suppliers</option>';
+      let select = document.getElementById('ordFilterSupplier'); select.innerHTML = '<option value="">All Suppliers</option>';
       let unique = [...new Set(data.map(r => r.supplier).filter(Boolean))];
       unique.forEach(s => { select.innerHTML += `<option value="${s}">${s}</option>`; });
     }
@@ -290,214 +239,128 @@
       if (mode === 'orders') {
         let fDate = document.getElementById('ordFilterDate').value;
         let fSup = document.getElementById('ordFilterSupplier').value;
-        let fStat = document.getElementById('ordFilterStatus').value.toUpperCase();
-        let fRec = document.getElementById('ordFilterRecDate').value;
-
+        let fPending = document.getElementById('ordPendingToggle').checked;
         let filtered = dbOrders.filter(row => {
-          return (!fDate || row.rawDate === fDate) &&
-                 (!fSup || row.supplier === fSup) &&
-                 (!fStat || row.status.toUpperCase() === fStat) &&
-                 (!fRec || row.receivedDate === fRec);
+          return (!fDate || row.rawDate === fDate) && (!fSup || row.supplier === fSup) && (!fPending || row.status.toUpperCase() === "PENDING");
         });
         renderOrdersTable(filtered);
-      }
-      else if (mode === 'production') {
-        let fDate = document.getElementById('prodFilterDate').value;
-        let fStat = document.getElementById('prodFilterStatus').value.toUpperCase();
-        let fSearch = document.getElementById('prodFilterSearch').value.toLowerCase();
-
-        let filtered = dbProduction.filter(row => {
-          let rowIsoDate = row.timestamp ? new Date(row.timestamp).toISOString().split('T')[0] : "";
-          return (!fDate || rowIsoDate === fDate) &&
-                 (!fStat || row.status.toUpperCase() === fStat) &&
-                 (!fSearch || row.item.toLowerCase().includes(fSearch));
+      } else if (mode === 'production') {
+        let search = document.getElementById("prodSearch").value.toLowerCase();
+        let stat = document.getElementById("prodStatusFilter").value;
+        let filtered = dbProduction.filter(r => (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status === stat));
+        let tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
+        filtered.forEach((row, i) => {
+          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-prod" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select id="p_stat_${i}" class="form-select form-select-sm"><option value="PENDING" ${row.status==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
         });
-        renderProductionTable(filtered);
-      }
-      else if (mode === 'wastage') {
-        let fDate = document.getElementById('wasteFilterDate').value;
-        let fStat = document.getElementById('wasteFilterStatus').value.toUpperCase();
-        let fSearch = document.getElementById('wasteFilterSearch').value.toLowerCase();
-
-        let filtered = dbWastage.filter(row => {
-          let rowIsoDate = row.timestamp ? new Date(row.timestamp).toISOString().split('T')[0] : "";
-          return (!fDate || rowIsoDate === fDate) &&
-                 (!fStat || row.status.toUpperCase() === fStat) &&
-                 (!fSearch || row.item.toLowerCase().includes(fSearch));
+      } else if (mode === 'wastage') {
+        let search = document.getElementById("wasteSearch").value.toLowerCase();
+        let stat = document.getElementById("wasteStatusFilter").value;
+        let filtered = dbWastage.filter(r => (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status === stat));
+        let tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
+        filtered.forEach((row, i) => {
+          tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold data-row-waste" data-ts="${row.rawDate}" data-name="${row.item}">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select id="w_stat_${i}" class="form-select form-select-sm"><option value="PENDING" ${row.status==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${row.status==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
         });
-        renderWastageTable(filtered);
       }
     }
 
     function renderOrdersTable(data) {
       const tbody = document.getElementById("ordersTableBody"); tbody.innerHTML = "";
-      if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="text-muted p-3">No matching order entries found.</td></tr>'; return; }
-      
       data.forEach((row, i) => {
-        let sClass = row.status.toUpperCase() === "RECEIVED" ? "badge-received" : (row.status.toUpperCase() === "ORDERED" ? "badge-ordered" : "badge-pending");
         tbody.innerHTML += `
-          <tr>
-            <td><span class="text-muted font-monospace">${row.date}</span></td>
+          <tr class="order-data-row" data-ts="${row.rawDate}" data-name="${row.item}">
+            <td><span class="text-muted small">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
-            <td><span class="badge bg-light text-dark border fs-6">${row.qty} ${row.unit}</span></td>
+            <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
-            <td><span class="badge-status ${sClass}">${row.status}</span></td>
-            <td>
-              <select id="ord_status_${i}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(${i})">
-                <option value="PENDING" ${row.status.toUpperCase()==="PENDING"?"selected":""}>PENDING</option>
-                <option value="ORDERED" ${row.status.toUpperCase()==="ORDERED"?"selected":""}>ORDERED</option>
-                <option value="RECEIVED" ${row.status.toUpperCase()==="RECEIVED"?"selected":""}>RECEIVED</option>
-                <option value="NOT RECEIVED" ${row.status.toUpperCase()==="NOT RECEIVED"?"selected":""}>NOT RECEIVED</option>
-              </select>
-            </td>
-            <td><input type="date" id="ord_date_${i}" class="form-control form-control-sm text-center" value="${row.receivedDate||""}" ${row.status.toUpperCase()!=="RECEIVED"?"disabled":""}></td>
-            <td><input type="text" id="ord_remarks_${i}" class="form-control form-control-sm" placeholder="Add custom notes" value="${row.remarks||""}"></td>
-            <td><button class="btn-save" onclick="commitOrderUpdate(${i}, '${row.rawDate}', '${btoa(unescape(encodeURIComponent(row.item)))}')"><i class="bi bi-cloud-arrow-up-fill"></i></button></td>
+            <td><span class="badge-status ${row.status.toUpperCase()==='RECEIVED'?'badge-received':'badge-pending'}">${row.status}</span></td>
+            <td><select id="o_stat_${i}" class="form-select form-select-sm fw-bold" onchange="toggleOrderDate(${i})"><option value="PENDING" ${row.status==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${row.status==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${row.status==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${row.status==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
+            <td><input type="date" id="o_date_${i}" class="form-control form-control-sm" value="${row.receivedDate||""}" ${row.status!=='RECEIVED'?'disabled':''}></td>
+            <td><input type="text" id="o_rem_${i}" class="form-control form-control-sm" value="${row.remarks||""}"></td>
           </tr>`;
       });
     }
 
     function toggleOrderDate(i) {
-      let select = document.getElementById(`ord_status_${i}`).value;
-      let dateInput = document.getElementById(`ord_date_${i}`);
-      if(select === "RECEIVED") {
-        dateInput.disabled = false;
-        if(!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
-      } else {
-        dateInput.disabled = true; dateInput.value = "";
+      let s = document.getElementById(`o_stat_${i}`).value;
+      document.getElementById(`o_date_${i}`).disabled = (s !== "RECEIVED");
+      if(s === "RECEIVED" && !document.getElementById(`o_date_${i}`).value) document.getElementById(`o_date_${i}`).value = new Date().toISOString().split('T')[0];
+    }
+
+    function renderMasterItemsGrid(items) {
+      const tbody = document.getElementById("masterItemsTableBody"); tbody.innerHTML = "";
+      items.forEach((item, i) => {
+        tbody.innerHTML += `<tr><td>${i+1}</td><td class="text-start editable-cell m-item-name" onclick="toggleCellToEdit(this)">${item.name}</td><td class="editable-cell m-item-sup" onclick="toggleCellToEdit(this)">${item.supplier}</td><td class="editable-cell m-item-unit" onclick="toggleCellToEdit(this)">${item.unit}</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td></tr>`;
+      });
+    }
+
+    function renderStaffGrid(list) {
+      const tbody = document.getElementById("staffTableBody"); tbody.innerHTML = "";
+      list.forEach(st => {
+        tbody.innerHTML += `<tr><td class="editable-cell s-grid-code fw-bold text-primary" onclick="toggleCellToEdit(this)">${st.code}</td><td class="editable-cell s-grid-name" onclick="toggleCellToEdit(this)">${st.name}</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td></tr>`;
+      });
+    }
+
+    function addNewItemRowToGrid() {
+      const tbody = document.getElementById("masterItemsTableBody");
+      let row = document.createElement('tr');
+      row.innerHTML = `<td>+</td><td class="text-start editable-cell m-item-name text-danger" onclick="toggleCellToEdit(this)">New Item</td><td class="editable-cell m-item-sup text-danger" onclick="toggleCellToEdit(this)">Supplier</td><td class="editable-cell m-item-unit text-danger" onclick="toggleCellToEdit(this)">PCS</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td>`;
+      tbody.prepend(row);
+    }
+
+    function addNewStaffRowToGrid() {
+      const tbody = document.getElementById("staffTableBody");
+      let row = document.createElement('tr');
+      row.innerHTML = `<td class="editable-cell s-grid-code fw-bold text-danger" onclick="toggleCellToEdit(this)">0000</td><td class="editable-cell s-grid-name text-danger" onclick="toggleCellToEdit(this)">Full Name</td><td><button class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()"><i class="bi bi-trash"></i></button></td>`;
+      tbody.prepend(row);
+    }
+
+    function filterMasterItemsGrid() {
+      let s = document.getElementById("masterItemsSearch").value.toLowerCase();
+      document.querySelectorAll("#masterItemsTableBody tr").forEach(tr => {
+        let name = tr.querySelector('.m-item-name') ? tr.querySelector('.m-item-name').innerText.toLowerCase() : "";
+        tr.style.display = name.includes(s) ? "" : "none";
+      });
+    }
+
+    // 💾 গ্লোবাল ওয়ান-ক্লিক বাল্ক সেভ ট্রান্সমিটার
+    function submitGlobalBulkChanges() {
+      triggerToast("Engaging Bulk Data Lock Shuttles...");
+      
+      if (currentTab === 'orders' || currentTab === 'production' || currentTab === 'wastage') {
+        let payload = { action: "adminBulkSave", orders: [], production: [], wastage: [] };
+        
+        document.querySelectorAll(".order-data-row").forEach((tr, i) => {
+          payload.orders.push({ rawDate: tr.dataset.ts, itemName: tr.dataset.name, status: document.getElementById(`o_stat_${i}`).value, receivedDate: document.getElementById(`o_date_${i}`).value, remarks: document.getElementById(`o_rem_${i}`).value });
+        });
+        document.querySelectorAll(".data-row-prod").forEach((td, i) => {
+          payload.production.push({ rawDate: td.dataset.ts, itemName: td.dataset.name, status: document.getElementById(`p_stat_${i}`).value });
+        });
+        document.querySelectorAll(".data-row-waste").forEach((td, i) => {
+          payload.wastage.push({ rawDate: td.dataset.ts, itemName: td.dataset.name, status: document.getElementById(`w_stat_${i}`).value });
+        });
+        
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Operational Matrix Capped!"); reloadCurrentActiveGrid(); } });
+      } 
+      else if (currentTab === 'master-items') {
+        let items = [];
+        document.querySelectorAll("#masterItemsTableBody tr").forEach(tr => {
+          let n = tr.querySelector('.m-item-name') ? tr.querySelector('.m-item-name').innerText.trim() : "";
+          let s = tr.querySelector('.m-item-sup') ? tr.querySelector('.m-item-sup').innerText.trim() : "";
+          let u = tr.querySelector('.m-item-unit') ? tr.querySelector('.m-item-unit').innerText.trim() : "";
+          if(n && n !== "-") items.push({ name: n, supplier: s, unit: u });
+        });
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: items }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("400+ Products Re-Indexed!"); reloadCurrentActiveGrid(); } });
+      } 
+      else if (currentTab === 'staff-dir') {
+        let staff = [];
+        document.querySelectorAll("#staffTableBody tr").forEach(tr => {
+          let c = tr.querySelector('.s-grid-code') ? tr.querySelector('.s-grid-code').innerText.trim() : "";
+          let n = tr.querySelector('.s-grid-name') ? tr.querySelector('.s-grid-name').innerText.trim() : "";
+          if(c && c !== "-") staff.push({ code: c, name: n });
+        });
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staff }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Access Grid Updated!"); reloadCurrentActiveGrid(); } });
       }
     }
-
-    function commitOrderUpdate(i, rawDate, base64Item) {
-      let payload = {
-        action: "adminUpdateOrder",
-        rawDate: rawDate,
-        itemName: decodeURIComponent(escape(atob(base64Item))),
-        status: document.getElementById(`ord_status_${i}`).value,
-        receivedDate: document.getElementById(`ord_date_${i}`).value,
-        remarks: document.getElementById(`ord_remarks_${i}`).value.trim()
-      };
-      triggerToast("Updating order record state...");
-      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
-        if(d.status === "Success") { triggerToast("Spreadsheet Row Saved!"); loadDataGrid('orders'); }
-      });
-    }
-
-    function renderProductionTable(data) {
-      const tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
-      if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-muted p-3">No production items recorded for this month.</td></tr>'; return; }
-      
-      data.forEach((row, i) => {
-        let isDone = row.status.toUpperCase() === "DONE";
-        tbody.innerHTML += `
-          <tr>
-            <td><span class="text-muted font-monospace">${row.date}</span></td>
-            <td class="text-start fw-bold text-info">${row.item}</td>
-            <td><span class="badge bg-light text-dark border fs-6">${row.qty}</span></td>
-            <td><span class="text-secondary">${row.unit}</span></td>
-            <td><span class="badge bg-dark">${row.by}</span></td>
-            <td>
-              <select id="prod_status_${i}" class="form-select form-select-sm fw-bold ${isDone?'border-success text-success':''}">
-                <option value="PENDING" ${!isDone?'selected':''}>⏳ PENDING</option>
-                <option value="DONE" ${isDone?'selected':''}>✅ DONE (FOODICS)</option>
-              </select>
-            </td>
-            <td><button class="btn-save btn-sm px-2 py-1" onclick="commitProdStatus(${i}, '${row.rawDate}', '${btoa(unescape(encodeURIComponent(row.item)))}')"><i class="bi bi-check-lg"></i></button></td>
-          </tr>`;
-      });
-    }
-
-    function commitProdStatus(i, rawDate, base64Item) {
-      let payload = {
-        action: "adminUpdateProductionStatus",
-        rawDate: rawDate,
-        itemName: decodeURIComponent(escape(atob(base64Item))),
-        status: document.getElementById(`prod_status_${i}`).value
-      };
-      triggerToast("Updating Production Sync Check State...");
-      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
-        if(d.status === "Success") { triggerToast("Production Backlog Checked!"); loadDataGrid('production'); }
-      });
-    }
-
-    function renderWastageTable(data) {
-      const tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
-      if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-muted p-3">No wastage items recorded for this month.</td></tr>'; return; }
-      
-      data.forEach((row, i) => {
-        let isDone = row.status.toUpperCase() === "DONE";
-        tbody.innerHTML += `
-          <tr>
-            <td><span class="text-muted font-monospace">${row.date}</span></td>
-            <td class="text-start fw-bold text-danger">${row.item}</td>
-            <td><span class="badge bg-light text-dark border fs-6">${row.qty}</span></td>
-            <td><span class="text-secondary">${row.unit}</span></td>
-            <td><span class="badge bg-warning text-dark fw-bold">${row.reason}</span></td>
-            <td><span class="badge bg-dark">${row.by}</span></td>
-            <td>
-              <select id="waste_status_${i}" class="form-select form-select-sm fw-bold ${isDone?'border-success text-success':''}">
-                <option value="PENDING" ${!isDone?'selected':''}>⏳ PENDING</option>
-                <option value="DONE" ${isDone?'selected':''}>✅ DONE (FOODICS)</option>
-              </select>
-            </td>
-            <td><button class="btn-save btn-sm px-2 py-1" onclick="commitWasteStatus(${i}, '${row.rawDate}', '${btoa(unescape(encodeURIComponent(row.item)))}')"><i class="bi bi-check-lg"></i></button></td>
-          </tr>`;
-      });
-    }
-
-    function commitWasteStatus(i, rawDate, base64Item) {
-      let payload = {
-        action: "adminUpdateWastageStatus",
-        rawDate: rawDate,
-        itemName: decodeURIComponent(escape(atob(base64Item))),
-        status: document.getElementById(`waste_status_${i}`).value
-      };
-      triggerToast("Updating Wastage Sync Check State...");
-      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
-        if(d.status === "Success") { triggerToast("Wastage Backlog Checked!"); loadDataGrid('wastage'); }
-      });
-    }
-
-    /* SUBMIT NEW MASTER ITEM TO DATABASE */
-    function submitNewMasterItem() {
-      let name = document.getElementById("newMasterItemName").value.trim();
-      let supplier = document.getElementById("newMasterItemSupplier").value.trim();
-      let unit = document.getElementById("newMasterItemUnit").value.trim();
-      
-      if(!name || !supplier || !unit) { alert("Please input all item parameters!"); return; }
-      
-      let payload = { action: "adminAddMasterItem", name: name, supplier: supplier, unit: unit };
-      triggerToast("Appending new product row inside Master_Items sheet...");
-      
-      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
-        if(d.status === "Success") {
-          triggerToast("Product Line added to Google Sheet!");
-          document.getElementById("newMasterItemName").value = "";
-          document.getElementById("newMasterItemSupplier").value = "";
-          document.getElementById("newMasterItemUnit").value = "";
-        }
-      });
-    }
-
-    /* SUBMIT NEW STAFF REGISTRATION TO DATABASE */
-    function submitNewStaff() {
-      let code = document.getElementById("newStaffCode").value.toString().trim();
-      let name = document.getElementById("newStaffName").value.trim();
-      
-      if(!code || !name) { alert("Please enter secret pin code and full staff name!"); return; }
-      
-      let payload = { action: "adminAddStaff", code: code, name: name };
-      triggerToast("Registering new profile inside Staff_Codes sheet...");
-      
-      fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => {
-        if(d.status === "Success") {
-          triggerToast("Staff PIN Activated successfully!");
-          document.getElementById("newStaffCode").value = "";
-          document.getElementById("newStaffName").value = "";
-        }
-      });
-    }
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html>  
