@@ -149,8 +149,8 @@
   </div>
 
   <script>
-    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbzgQjD-Q0mhn7PArsH8cgOiQMY8BnzNHaKwxfy5z-zVx3qEYLPlHMR1xT9SroA5jOVAGw/exec";
-    const MASTER_PIN = "9988";
+    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbx7IqNU9SSuZmTuQ9ZBQf5A2LxkxvBH_NgbdoC54rih309QLeF013ebOHeIZdgIrPq8gQ/exec";
+    const MASTER_PIN = "3898";
     const PAGE_SIZE = 30;
     
     let dbOrders = [], dbProduction = [], dbWastage = [], dbMasterItems = [], dbStaffList = [];
@@ -213,35 +213,43 @@
       localEditedItems[rowId]['supplier'] = val;
     }
 
-    function syncOrderChange(sheetRow, field, val) {
-      let origRow = dbOrders.find(r => r.rowNumber == sheetRow);
+    // ⚡ ইউনিক র-ডেট (ইউনিক আইডি) ভিত্তিক ট্র্যাকিং মেকানিজম
+    function syncOrderChange(rawDateId, field, val) {
+      let origRow = dbOrders.find(r => r.rawDate == rawDateId);
       if(!origRow) return;
-      if(!memoryEditedOrders[sheetRow]) {
-        memoryEditedOrders[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks, rawDate: origRow.rawDate };
+      if(!memoryEditedOrders[rawDateId]) {
+        memoryEditedOrders[rawDateId] = { rawDate: rawDateId, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks };
       }
-      memoryEditedOrders[sheetRow][field] = val;
+      memoryEditedOrders[rawDateId][field] = val;
+      
       if(field === 'status') {
-        let dInput = document.getElementById(`o_date_${sheetRow}`);
+        let dInput = document.getElementById(`o_date_${rawDateId}`);
         if(dInput) {
           dInput.disabled = (val !== "RECEIVED");
           if(val === "RECEIVED" && !dInput.value) {
             dInput.value = new Date().toISOString().split('T')[0];
-            memoryEditedOrders[sheetRow]['receivedDate'] = dInput.value;
+            memoryEditedOrders[rawDateId]['receivedDate'] = dInput.value;
           }
         }
+        // ⚡ ইউজার ইন্টারফেসে লাইভ আপডেট ধরে রাখার জন্য লোকাল ডাটা মডিফাই
+        origRow.status = val;
       }
+      if(field === 'receivedDate') origRow.receivedDate = val;
+      if(field === 'remarks') origRow.remarks = val;
     }
 
-    function syncProdChange(sheetRow, val) {
-      let origRow = dbProduction.find(r => r.rowNumber == sheetRow);
+    function syncProdChange(rawDateId, val) {
+      let origRow = dbProduction.find(r => r.rawDate == rawDateId);
       if(!origRow) return;
-      memoryEditedProduction[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val, rawDate: origRow.rawDate };
+      memoryEditedProduction[rawDateId] = { rawDate: rawDateId, itemName: origRow.item, status: val };
+      origRow.status = val;
     }
 
-    function syncWasteChange(sheetRow, val) {
-      let origRow = dbWastage.find(r => r.rowNumber == sheetRow);
+    function syncWasteChange(rawDateId, val) {
+      let origRow = dbWastage.find(r => r.rawDate == rawDateId);
       if(!origRow) return;
-      memoryEditedWastage[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val, rawDate: origRow.rawDate };
+      memoryEditedWastage[rawDateId] = { rawDate: rawDateId, itemName: origRow.item, status: val };
+      origRow.status = val;
     }
 
     function switchActiveTab(target) {
@@ -355,10 +363,10 @@
       let start = (currentPages.orders - 1) * PAGE_SIZE;
       let pageData = filteredOrders.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
-        let rNum = row.rowNumber;
-        let liveState = memoryEditedOrders[rNum] ? memoryEditedOrders[rNum].status : row.status.toUpperCase();
-        let liveDate = memoryEditedOrders[rNum] ? memoryEditedOrders[rNum].receivedDate : row.receivedDate;
-        let liveRem = memoryEditedOrders[rNum] ? memoryEditedOrders[rNum].remarks : row.remarks;
+        let rDateId = row.rawDate;
+        let liveState = row.status.toUpperCase();
+        let liveDate = row.receivedDate;
+        let liveRem = row.remarks;
         
         let sClass = 'badge-pending';
         if(liveState === 'RECEIVED') sClass = 'badge-received';
@@ -372,9 +380,9 @@
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
             <td><span class="badge-status ${sClass}">${liveState}</span></td>
-            <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
-            <td><input type="date" id="o_date_${rNum}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange(${rNum}, 'receivedDate', this.value)"></td>
-            <td><input type="text" class="form-control form-control-sm" value="${liveRem||""}" oninput="syncOrderChange(${rNum}, 'remarks', this.value)"></td>
+            <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange('${rDateId}', 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
+            <td><input type="date" id="o_date_${rDateId}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange('${rDateId}', 'receivedDate', this.value)"></td>
+            <td><input type="text" class="form-control form-control-sm" value="${liveRem||""}" oninput="syncOrderChange('${rDateId}', 'remarks', this.value)"></td>
           </tr>`;
       });
       setupPaginationControls(filteredOrders.length, 'orders', 'ordersPaginationBtns', 'ordersPageInfo');
@@ -395,9 +403,10 @@
       let start = (currentPages.production - 1) * PAGE_SIZE;
       let pageData = filteredProduction.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
-        let liveState = memoryEditedProduction[row.rowNumber] ? memoryEditedProduction[row.rowNumber].status : row.status.toUpperCase();
+        let rDateId = row.rawDate;
+        let liveState = row.status.toUpperCase();
         let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange(${row.rowNumber}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange('${rDateId}', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
     }
@@ -407,9 +416,10 @@
       let start = (currentPages.wastage - 1) * PAGE_SIZE;
       let pageData = filteredWastage.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
-        let liveState = memoryEditedWastage[row.rowNumber] ? memoryEditedWastage[row.rowNumber].status : row.status.toUpperCase();
+        let rDateId = row.rawDate;
+        let liveState = row.status.toUpperCase();
         let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange(${row.rowNumber}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange('${rDateId}', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
@@ -439,11 +449,25 @@
     }
 
     function submitGlobalBulkChanges() {
-      triggerToast("Saving and locking core metrics...");
+      triggerToast("Pushing updates directly to Google Sheets...");
       if (currentTab === 'orders' || currentTab === 'production' || currentTab === 'wastage') {
         let payload = { action: "adminBulkSave", orders: Object.values(memoryEditedOrders), production: Object.values(memoryEditedProduction), wastage: Object.values(memoryEditedWastage) };
         if(payload.orders.length === 0 && payload.production.length === 0 && payload.wastage.length === 0) { triggerToast("No modifications detected."); return; }
-        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Operational Matrix Updated Successfully!"); memoryEditedOrders = {}; memoryEditedProduction = {}; memoryEditedWastage = {}; reloadCurrentActiveGrid(); } });
+        
+        fetch(CORE_API_URL, { method: "POST", body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(d => { 
+          if(d.status === "Success") { 
+            triggerToast("Database Lock Successful! Spreadsheet Synced."); 
+            memoryEditedOrders = {}; memoryEditedProduction = {}; memoryEditedWastage = {}; 
+            // ⚡ রিফ্রেশ টাইমিং এর সমস্যা দূর করতে লোকাল এডিট রেপ্লিকেট করা হলো
+            if (currentTab === 'orders') renderOrdersTable();
+            if (currentTab === 'production') renderProductionTable();
+            if (currentTab === 'wastage') renderWastageTable();
+          } else {
+            triggerToast("Sync error. Please try again.");
+          }
+        }).catch(err => { triggerToast("Network or API Timeout. Checking sheet..."); });
       } 
       else if (currentTab === 'master-items') {
         let itemsPayload = Object.values(localEditedItems); if(itemsPayload.length === 0) { triggerToast("No modifications detected."); return; }
