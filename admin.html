@@ -103,8 +103,7 @@
           <div class="card p-3 bg-white border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
               <div class="col-md-5"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines..." oninput="applyFilters('master-items')"></div>
-              <!-- ⚡ নতুন সাপ্লায়ার ফিল্টার ড্রপডাউন এখানে যোগ করা হয়েছে -->
-              <div class="col-md-4"><select id="masterFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('master-items')"><option value="">All Suppliers</option></select></div>
+              <div class="col-md-4"><select id="masterFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('master-items')"><option value="">All Suppliers Filter</option></select></div>
               <div class="col-md-3"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Add Row</button></div>
             </div>
           </div>
@@ -219,21 +218,22 @@
       localEditedItems[rowId]['supplier'] = val;
     }
 
-    function syncOrderChange(rawDateId, field, val) {
-      let origRow = dbOrders.find(r => r.rawDate == rawDateId);
+    // ⚡ ১০০% রো-নাম্বার গ্যারান্টিড ট্র্যাক বাইন্ডিং ইঞ্জিন
+    function syncOrderChange(sheetRow, field, val) {
+      let origRow = dbOrders.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
-      if(!memoryEditedOrders[rawDateId]) {
-        memoryEditedOrders[rawDateId] = { rawDate: rawDateId, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks };
+      if(!memoryEditedOrders[sheetRow]) {
+        memoryEditedOrders[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks, rawDate: origRow.rawDate };
       }
-      memoryEditedOrders[rawDateId][field] = val;
+      memoryEditedOrders[sheetRow][field] = val;
       
       if(field === 'status') {
-        let dInput = document.getElementById(`o_date_${rawDateId}`);
+        let dInput = document.getElementById(`o_date_${sheetRow}`);
         if(dInput) {
           dInput.disabled = (val !== "RECEIVED");
           if(val === "RECEIVED" && !dInput.value) {
             dInput.value = new Date().toISOString().split('T')[0];
-            memoryEditedOrders[rawDateId]['receivedDate'] = dInput.value;
+            memoryEditedOrders[sheetRow]['receivedDate'] = dInput.value;
           }
         }
         origRow.status = val;
@@ -242,17 +242,17 @@
       if(field === 'remarks') origRow.remarks = val;
     }
 
-    function syncProdChange(rawDateId, val) {
-      let origRow = dbProduction.find(r => r.rawDate == rawDateId);
+    function syncProdChange(sheetRow, val) {
+      let origRow = dbProduction.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
-      memoryEditedProduction[rawDateId] = { rawDate: rawDateId, itemName: origRow.item, status: val };
+      memoryEditedProduction[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val, rawDate: origRow.rawDate };
       origRow.status = val;
     }
 
-    function syncWasteChange(rawDateId, val) {
-      let origRow = dbWastage.find(r => r.rawDate == rawDateId);
+    function syncWasteChange(sheetRow, val) {
+      let origRow = dbWastage.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
-      memoryEditedWastage[rawDateId] = { rawDate: rawDateId, itemName: origRow.item, status: val };
+      memoryEditedWastage[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val, rawDate: origRow.rawDate };
       origRow.status = val;
     }
 
@@ -280,7 +280,7 @@
         fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { 
           dbMasterItems = data.items; dbStaffList = data.staffList; 
           uniqueSuppliersList = [...new Set(dbMasterItems.map(i => i.supplier).filter(Boolean))];
-          populateMasterSupplierFilter(); // ⚡ সাপ্লায়ার ফিল্টার পপুলেট লজিক
+          populateMasterSupplierFilter(); 
           applyFilters('master-items'); renderStaffGrid(dbStaffList); 
         });
       } else if (currentTab === 'production') {
@@ -318,7 +318,7 @@
       } 
       else if (mode === 'master-items') {
         let s = document.getElementById("masterItemsSearch").value.toLowerCase();
-        let fSup = document.getElementById("masterFilterSupplier").value; // ⚡ সাপ্লায়ার ড্রপডাউন ভ্যালু ক্যাচ
+        let fSup = document.getElementById("masterFilterSupplier").value;
         filteredMasterItems = dbMasterItems.filter(item => {
           return (!s || item.name.toLowerCase().includes(s)) && (!fSup || item.supplier === fSup);
         });
@@ -377,7 +377,7 @@
       let start = (currentPages.orders - 1) * PAGE_SIZE;
       let pageData = filteredOrders.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
-        let rDateId = row.rawDate;
+        let rNum = row.rowNumber;
         let liveState = row.status.toUpperCase();
         let liveDate = row.receivedDate;
         let liveRem = row.remarks;
@@ -395,9 +395,9 @@
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
             <td><span class="badge-status ${sClass}">${liveState}</span></td>
-            <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange('${rDateId}', 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option><option value="REJECTED" ${liveState==='REJECTED'?'selected':''}>REJECTED</option></select></td>
-            <td><input type="date" id="o_date_${rDateId}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange('${rDateId}', 'receivedDate', this.value)"></td>
-            <td><input type="text" class="form-control form-control-sm" value="${liveRem||""}" oninput="syncOrderChange('${rDateId}', 'remarks', this.value)"></td>
+            <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option><option value="REJECTED" ${liveState==='REJECTED'?'selected':''}>REJECTED</option></select></td>
+            <td><input type="date" id="o_date_${rNum}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange(${rNum}, 'receivedDate', this.value)"></td>
+            <td><input type="text" class="form-control form-control-sm" value="${liveRem||""}" oninput="syncOrderChange(${rNum}, 'remarks', this.value)"></td>
           </tr>`;
       });
       setupPaginationControls(filteredOrders.length, 'orders', 'ordersPaginationBtns', 'ordersPageInfo');
@@ -418,10 +418,10 @@
       let start = (currentPages.production - 1) * PAGE_SIZE;
       let pageData = filteredProduction.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
-        let rDateId = row.rawDate;
+        let rNum = row.rowNumber;
         let liveState = row.status.toUpperCase();
         let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange('${rDateId}', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange(${rNum}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
     }
@@ -431,10 +431,10 @@
       let start = (currentPages.wastage - 1) * PAGE_SIZE;
       let pageData = filteredWastage.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
-        let rDateId = row.rawDate;
+        let rNum = row.rowNumber;
         let liveState = row.status.toUpperCase();
         let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange('${rDateId}', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange(${rNum}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
@@ -475,11 +475,9 @@
           if(d.status === "Success") { 
             triggerToast("Database Lock Successful! Spreadsheet Synced."); 
             memoryEditedOrders = {}; memoryEditedProduction = {}; memoryEditedWastage = {}; 
-            if (currentTab === 'orders') renderOrdersTable();
-            if (currentTab === 'production') renderProductionTable();
-            if (currentTab === 'wastage') renderWastageTable();
+            setTimeout(() => { reloadCurrentActiveGrid(); }, 500); 
           } else { triggerToast("Sync error. Please try again."); }
-        }).catch(err => { triggerToast("Network error. Checking sheet..."); });
+        }).catch(err => { triggerToast("Network communication lag. Re-verifying..."); setTimeout(() => { reloadCurrentActiveGrid(); }, 1000); });
       } 
       else if (currentTab === 'master-items') {
         let itemsPayload = Object.values(localEditedItems); if(itemsPayload.length === 0) { triggerToast("No modifications detected."); return; }
