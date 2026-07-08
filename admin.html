@@ -25,6 +25,7 @@
     .badge-pending { background-color: #fee2e2; color: #991b1b; }
     .badge-ordered { background-color: #fef3c7; color: #92400e; }
     .badge-received { background-color: #d1fae5; color: #065f46; }
+    .badge-not-received { background-color: #e5e7eb; color: #374151; }
     .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.85rem; }
     #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
     @media (max-width: 768px) {
@@ -79,16 +80,16 @@
         <div id="panel-orders" class="admin-tab-content">
           <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
-              <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📅 Date Filter</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
+              <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📅 Order Date Filter</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
               <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📦 Supplier</label><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
-              <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">⏳ State</label><select id="ordFilterState" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="ORDERED">ORDERED</option><option value="RECEIVED">RECEIVED</option></select></div>
+              <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">⏳ State</label><select id="ordFilterState" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="ORDERED">ORDERED</option><option value="RECEIVED">RECEIVED</option><option value="NOT RECEIVED">NOT RECEIVED</option></select></div>
               <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">🔍 Search</label><input type="text" id="ordFilterSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('orders')"></div>
               <div class="col-md-2 col-12 text-md-center"><div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" id="ordPendingToggle" onchange="applyFilters('orders')"><label class="form-check-label fw-bold text-danger" for="ordPendingToggle">Pending Only</label></div></div>
             </div>
           </div>
           <div class="data-card">
             <div class="table-responsive"><table class="table table-hover table-striped mb-0">
-              <thead><tr><th>Date</th><th class="text-start">Item</th><th>Qty</th><th>Supplier</th><th>State</th><th>Action</th><th>Received Date</th><th>Remarks</th></tr></thead>
+              <thead><tr><th>Order Date</th><th class="text-start">Item</th><th>Qty</th><th>Supplier</th><th>State</th><th>Action</th><th>Received Date</th><th>Remarks</th></tr></thead>
               <tbody id="ordersTableBody"></tbody>
             </table></div>
             <div class="pagination-container"><div id="ordersPageInfo" class="text-muted"></div><div id="ordersPaginationBtns" class="btn-group btn-group-sm"></div></div>
@@ -256,6 +257,20 @@
       reloadCurrentActiveGrid();
     }
 
+    function convertFormattedToIsoDate(dateStr) {
+      if(!dateStr) return "";
+      try {
+        let cleanStr = dateStr.split(',')[0].trim(); 
+        let parts = cleanStr.split(' '); 
+        if(parts.length < 2) return "";
+        let months = { "Jan":"01", "Feb":"02", "Mar":"03", "Apr":"04", "May":"05", "Jun":"06", "Jul":"07", "Aug":"08", "Sep":"09", "Oct":"10", "Nov":"11", "Dec":"12" };
+        let m = months[parts[0]];
+        let d = parts[1].padStart(2, '0');
+        let y = new Date().getFullYear(); 
+        return `${y}-${m}-${d}`;
+      } catch(e) { return ""; }
+    }
+
     function reloadCurrentActiveGrid() {
       if (currentTab === 'orders') {
         document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
@@ -291,7 +306,8 @@
         let fSearch = document.getElementById('ordFilterSearch').value.toLowerCase();
         let fPending = document.getElementById('ordPendingToggle').checked;
         filteredOrders = dbOrders.filter(row => {
-          return (!fDate || row.receivedDate === fDate) && (!fSup || row.supplier === fSup) && (!fState || row.status.toUpperCase() === fState) && (!fSearch || row.item.toLowerCase().includes(fSearch)) && (!fPending || row.status.toUpperCase() === "PENDING");
+          let orderIsoDate = convertFormattedToIsoDate(row.date); // 📅 অর্ডার সাবমিশন ডেট রূপান্তর লজিক
+          return (!fDate || orderIsoDate === fDate) && (!fSup || row.supplier === fSup) && (!fState || row.status.toUpperCase() === fState) && (!fSearch || row.item.toLowerCase().includes(fSearch)) && (!fPending || row.status.toUpperCase() === "PENDING");
         });
         currentPages.orders = 1; renderOrdersTable();
       } 
@@ -357,15 +373,20 @@
         let liveState = memoryEditedOrders[rNum] ? memoryEditedOrders[rNum].status : row.status.toUpperCase();
         let liveDate = memoryEditedOrders[rNum] ? memoryEditedOrders[rNum].receivedDate : row.receivedDate;
         let liveRem = memoryEditedOrders[rNum] ? memoryEditedOrders[rNum].remarks : row.remarks;
-        let sClass = liveState === 'RECEIVED' ? 'badge-received' : (liveState === 'ORDERED' ? 'badge-ordered' : 'badge-pending');
+        
+        let sClass = 'badge-pending';
+        if(liveState === 'RECEIVED') sClass = 'badge-received';
+        else if(liveState === 'ORDERED') sClass = 'badge-ordered';
+        else if(liveState === 'NOT RECEIVED') sClass = 'badge-not-received';
+
         tbody.innerHTML += `
           <tr>
-            <td><span class="text-muted small">${row.date}</span></td>
+            <td><span class="text-muted small fw-bold">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
             <td><span class="badge bg-secondary">${row.supplier}</span></td>
             <td><span class="badge-status ${sClass}">${liveState}</span></td>
-            <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option></select></td>
+            <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option></select></td>
             <td><input type="date" id="o_date_${rNum}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange(${rNum}, 'receivedDate', this.value)"></td>
             <td><input type="text" class="form-control form-control-sm" value="${liveRem||""}" oninput="syncOrderChange(${rNum}, 'remarks', this.value)"></td>
           </tr>`;
