@@ -26,6 +26,7 @@
     .badge-ordered { background-color: #fef3c7; color: #92400e; }
     .badge-received { background-color: #d1fae5; color: #065f46; }
     .badge-not-received { background-color: #e5e7eb; color: #374151; }
+    .badge-done { background-color: #d1fae5; color: #065f46; }
     .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.85rem; }
     #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
     @media (max-width: 768px) {
@@ -148,7 +149,7 @@
   </div>
 
   <script>
-    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbxL1k3CMwShqhsgdcT1epelxT7V8thRubJkKlEf7_A-I7w-PK2qYWSz9JNTI52OzAejOA/exec";
+    const CORE_API_URL = "https://script.google.com/macros/s/AKfycbzgQjD-Q0mhn7PArsH8cgOiQMY8BnzNHaKwxfy5z-zVx3qEYLPlHMR1xT9SroA5jOVAGw/exec";
     const MASTER_PIN = "9988";
     const PAGE_SIZE = 30;
     
@@ -216,7 +217,7 @@
       let origRow = dbOrders.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
       if(!memoryEditedOrders[sheetRow]) {
-        memoryEditedOrders[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks };
+        memoryEditedOrders[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks, rawDate: origRow.rawDate };
       }
       memoryEditedOrders[sheetRow][field] = val;
       if(field === 'status') {
@@ -234,13 +235,13 @@
     function syncProdChange(sheetRow, val) {
       let origRow = dbProduction.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
-      memoryEditedProduction[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val };
+      memoryEditedProduction[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val, rawDate: origRow.rawDate };
     }
 
     function syncWasteChange(sheetRow, val) {
       let origRow = dbWastage.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
-      memoryEditedWastage[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val };
+      memoryEditedWastage[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: val, rawDate: origRow.rawDate };
     }
 
     function switchActiveTab(target) {
@@ -255,20 +256,6 @@
       let titles = { 'orders': 'Orders Overrider Panel', 'master-items': 'Master Items Asset Grid', 'staff-dir': 'Staff Credentials Hub', 'production': 'Production Batch Log Check', 'wastage': 'Wastage Damage Log Check' };
       document.getElementById("stageTitle").innerText = titles[target] || 'Goya Hub';
       reloadCurrentActiveGrid();
-    }
-
-    function convertFormattedToIsoDate(dateStr) {
-      if(!dateStr) return "";
-      try {
-        let cleanStr = dateStr.split(',')[0].trim(); 
-        let parts = cleanStr.split(' '); 
-        if(parts.length < 2) return "";
-        let months = { "Jan":"01", "Feb":"02", "Mar":"03", "Apr":"04", "May":"05", "Jun":"06", "Jul":"07", "Aug":"08", "Sep":"09", "Oct":"10", "Nov":"11", "Dec":"12" };
-        let m = months[parts[0]];
-        let d = parts[1].padStart(2, '0');
-        let y = new Date().getFullYear(); 
-        return `${y}-${m}-${d}`;
-      } catch(e) { return ""; }
     }
 
     function reloadCurrentActiveGrid() {
@@ -306,8 +293,7 @@
         let fSearch = document.getElementById('ordFilterSearch').value.toLowerCase();
         let fPending = document.getElementById('ordPendingToggle').checked;
         filteredOrders = dbOrders.filter(row => {
-          let orderIsoDate = convertFormattedToIsoDate(row.date); // 📅 অর্ডার সাবমিশন ডেট রূপান্তর লজিক
-          return (!fDate || orderIsoDate === fDate) && (!fSup || row.supplier === fSup) && (!fState || row.status.toUpperCase() === fState) && (!fSearch || row.item.toLowerCase().includes(fSearch)) && (!fPending || row.status.toUpperCase() === "PENDING");
+          return (!fDate || row.orderIsoDate === fDate) && (!fSup || row.supplier === fSup) && (!fState || row.status.toUpperCase() === fState) && (!fSearch || row.item.toLowerCase().includes(fSearch)) && (!fPending || row.status.toUpperCase() === "PENDING");
         });
         currentPages.orders = 1; renderOrdersTable();
       } 
@@ -410,7 +396,8 @@
       let pageData = filteredProduction.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
         let liveState = memoryEditedProduction[row.rowNumber] ? memoryEditedProduction[row.rowNumber].status : row.status.toUpperCase();
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="syncProdChange(${row.rowNumber}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange(${row.rowNumber}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
     }
@@ -421,7 +408,8 @@
       let pageData = filteredWastage.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
         let liveState = memoryEditedWastage[row.rowNumber] ? memoryEditedWastage[row.rowNumber].status : row.status.toUpperCase();
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><select class="form-select form-select-sm fw-bold" onchange="syncWasteChange(${row.rowNumber}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange(${row.rowNumber}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
