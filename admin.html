@@ -101,7 +101,12 @@
         <!-- MASTER ITEMS TAB -->
         <div id="panel-master-items" class="admin-tab-content d-none">
           <div class="card p-3 bg-white border shadow-sm mb-3">
-            <div class="row g-2"><div class="col-md-8"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines..." oninput="applyFilters('master-items')"></div><div class="col-md-4"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Add Row</button></div></div>
+            <div class="row g-2 align-items-center">
+              <div class="col-md-5"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines..." oninput="applyFilters('master-items')"></div>
+              <!-- ⚡ নতুন সাপ্লায়ার ফিল্টার ড্রপডাউন এখানে যোগ করা হয়েছে -->
+              <div class="col-md-4"><select id="masterFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('master-items')"><option value="">All Suppliers</option></select></div>
+              <div class="col-md-3"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Add Row</button></div>
+            </div>
           </div>
           <div class="data-card">
             <div class="table-responsive"><table class="table table-hover table-bordered table-striped mb-0">
@@ -275,6 +280,7 @@
         fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { 
           dbMasterItems = data.items; dbStaffList = data.staffList; 
           uniqueSuppliersList = [...new Set(dbMasterItems.map(i => i.supplier).filter(Boolean))];
+          populateMasterSupplierFilter(); // ⚡ সাপ্লায়ার ফিল্টার পপুলেট লজিক
           applyFilters('master-items'); renderStaffGrid(dbStaffList); 
         });
       } else if (currentTab === 'production') {
@@ -292,6 +298,12 @@
       unique.forEach(s => { select.innerHTML += `<option value="${s}">${s}</option>`; });
     }
 
+    function populateMasterSupplierFilter() {
+      let select = document.getElementById('masterFilterSupplier'); if(!select) return;
+      select.innerHTML = '<option value="">All Suppliers Filter</option>';
+      uniqueSuppliersList.forEach(s => { select.innerHTML += `<option value="${s}">${s}</option>`; });
+    }
+
     function applyFilters(mode) {
       if (mode === 'orders') {
         let fDate = document.getElementById('ordFilterDate').value;
@@ -306,7 +318,10 @@
       } 
       else if (mode === 'master-items') {
         let s = document.getElementById("masterItemsSearch").value.toLowerCase();
-        filteredMasterItems = dbMasterItems.filter(item => !s || item.name.toLowerCase().includes(s));
+        let fSup = document.getElementById("masterFilterSupplier").value; // ⚡ সাপ্লায়ার ড্রপডাউন ভ্যালু ক্যাচ
+        filteredMasterItems = dbMasterItems.filter(item => {
+          return (!s || item.name.toLowerCase().includes(s)) && (!fSup || item.supplier === fSup);
+        });
         currentPages['master-items'] = 1; renderMasterItemsGrid();
       }
       else if (mode === 'production') {
@@ -371,7 +386,7 @@
         if(liveState === 'RECEIVED') sClass = 'badge-received';
         else if(liveState === 'ORDERED') sClass = 'badge-ordered';
         else if(liveState === 'NOT RECEIVED') sClass = 'badge-not-received';
-        else if(liveState === 'REJECTED') sClass = 'badge-rejected'; // ⚡ রিজেক্টেড ব্যাজ স্টাইল
+        else if(liveState === 'REJECTED') sClass = 'badge-rejected';
 
         tbody.innerHTML += `
           <tr>
