@@ -88,10 +88,41 @@
               <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">🔍 Search</label><input type="text" id="ordFilterSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('orders')"></div>
               <div class="col-md-2 col-12 text-md-center"><div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" id="ordPendingToggle" onchange="applyFilters('orders')"><label class="form-check-label fw-bold text-danger" for="ordPendingToggle">Pending Only</label></div></div>
             </div>
+            
+            <!-- ⚡ Bulk Action Toolbar -->
+            <div class="row g-2 align-items-center mt-3 pt-3 border-top bg-light p-2 rounded">
+              <div class="col-md-4 fw-bold text-dark small"><i class="bi bi-lightning-fill text-warning"></i> Bulk Actions for Filtered/Selected:</div>
+              <div class="col-md-4">
+                <select id="bulkStatusSelect" class="form-select form-select-sm fw-bold">
+                  <option value="">-- Choose Status to Apply --</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="ORDERED">ORDERED</option>
+                  <option value="RECEIVED">RECEIVED</option>
+                  <option value="NOT RECEIVED">NOT RECEIVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-dark btn-sm fw-bold w-100 shadow-sm" onclick="applyBulkStatusToSelected()">⚡ Apply to Selected / Filtered</button>
+              </div>
+            </div>
           </div>
+
           <div class="data-card">
             <div class="table-responsive"><table class="table table-hover table-striped mb-0">
-              <thead><tr><th>Order Date</th><th class="text-start">Item</th><th>Qty</th><th>Supplier</th><th>State</th><th>Action</th><th>Received Date</th><th>Remarks</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllOrders(this)"></th>
+                  <th>Order Date</th>
+                  <th class="text-start">Item</th>
+                  <th>Qty</th>
+                  <th>Supplier</th>
+                  <th>State</th>
+                  <th>Action</th>
+                  <th>Received Date</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
               <tbody id="ordersTableBody"></tbody>
             </table></div>
             <div class="pagination-container"><div id="ordersPageInfo" class="text-muted"></div><div id="ordersPaginationBtns" class="btn-group btn-group-sm"></div></div>
@@ -272,7 +303,7 @@
 
     function reloadCurrentActiveGrid() {
       if (currentTab === 'orders') {
-        document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="8">Syncing order entries...</td></tr>';
+        document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="9">Syncing order entries...</td></tr>';
         fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; memoryEditedOrders = {}; populateSupplierFilter(data); applyFilters('orders'); });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
         localEditedItems = {}; localEditedStaff = {};
@@ -371,9 +402,42 @@
       if (tabKey === 'wastage') renderWastageTable();
     }
 
+    function toggleSelectAllOrders(masterCheckbox) {
+      const checkboxes = document.querySelectorAll('.order-row-checkbox');
+      checkboxes.forEach(cb => { cb.checked = masterCheckbox.checked; });
+    }
+
+    function applyBulkStatusToSelected() {
+      let targetStatus = document.getElementById('bulkStatusSelect').value;
+      if (!targetStatus) { triggerToast("Please select a status first!"); return; }
+
+      let checkedBoxes = document.querySelectorAll('.order-row-checkbox:checked');
+      
+      // যদি ইউজার কোনো চেকবাক্স সিলেক্ট না করে, তবে ফিল্টার করা বর্তমান টেবিলের সব রো-তে এটি এপ্লাই হবে (যেমন: নির্দিষ্ট সাপ্লায়ার সিলেক্ট করা থাকলে শুধু তার ওপরই পড়বে)
+      let targetRows = [];
+      if (checkedBoxes.length > 0) {
+        checkedBoxes.forEach(cb => targetRows.push(parseInt(cb.value)));
+      } else {
+        // যদি টিক না দেওয়া থাকে, তবে ফিল্টার করা বর্তমান তালिकाओं থেকে রো নাম্বারগুলো নেওয়া হবে
+        let start = (currentPages.orders - 1) * PAGE_SIZE;
+        let pageData = filteredOrders.slice(start, start + PAGE_SIZE);
+        targetRows = pageData.map(r => r.rowNumber);
+      }
+
+      if (targetRows.length === 0) { triggerToast("No orders available to update."); return; }
+
+      targetRows.forEach(rNum => {
+        syncOrderChange(rNum, 'status', targetStatus);
+      });
+
+      renderOrdersTable();
+      triggerToast(`Successfully applied ${targetStatus} to selected orders! Click 'Save All Changes' to sync.`);
+    }
+
     function renderOrdersTable() {
       const tbody = document.getElementById("ordersTableBody"); tbody.innerHTML = "";
-      if (filteredOrders.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="p-3 text-muted">No records.</td></tr>'; return; }
+      document.getElementById("selectAllCheckbox").checked = false;
+      if (filteredOrders.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="p-3 text-muted">No records.</td></tr>'; return; }
       let start = (currentPages.orders - 1) * PAGE_SIZE;
       let pageData = filteredOrders.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
@@ -390,6 +454,7 @@
 
         tbody.innerHTML += `
           <tr>
+            <td><input type="checkbox" class="order-row-checkbox" value="${rNum}"></td>
             <td><span class="text-muted small fw-bold">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
@@ -484,7 +549,7 @@
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: itemsPayload }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Grid Synchronization Complete!"); reloadCurrentActiveGrid(); } });
       } 
       else if (currentTab === 'staff-dir') {
-        let staffPayload = Object.values(localEditedStaff); if(staffPayload.length === 0) { triggerToast("No modifications detected."); return; }
+        let staffPayload = Object.values(localEditedStaff); if(staffPayload.length ===0) { triggerToast("No modifications detected."); return; }
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staffPayload }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Directory Secured!"); reloadCurrentActiveGrid(); } });
       }
     }
