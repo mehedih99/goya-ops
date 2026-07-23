@@ -89,12 +89,12 @@
               <div class="col-md-2 col-12 text-md-center"><div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" id="ordPendingToggle" onchange="applyFilters('orders')"><label class="form-check-label fw-bold text-danger" for="ordPendingToggle">Pending Only</label></div></div>
             </div>
             
-            <!-- ⚡ Bulk Action Toolbar -->
+            <!-- ⚡ Bulk Action & WhatsApp Toolbar -->
             <div class="row g-2 align-items-center mt-3 pt-3 border-top bg-light p-2 rounded">
-              <div class="col-md-4 fw-bold text-dark small"><i class="bi bi-lightning-fill text-warning"></i> Bulk Actions for Filtered/Selected:</div>
-              <div class="col-md-4">
+              <div class="col-md-3 fw-bold text-dark small"><i class="bi bi-lightning-fill text-warning"></i> Bulk Actions:</div>
+              <div class="col-md-3">
                 <select id="bulkStatusSelect" class="form-select form-select-sm fw-bold">
-                  <option value="">-- Choose Status to Apply --</option>
+                  <option value="">-- Status --</option>
                   <option value="PENDING">PENDING</option>
                   <option value="ORDERED">ORDERED</option>
                   <option value="RECEIVED">RECEIVED</option>
@@ -102,8 +102,11 @@
                   <option value="REJECTED">REJECTED</option>
                 </select>
               </div>
-              <div class="col-md-4">
-                <button class="btn btn-dark btn-sm fw-bold w-100 shadow-sm" onclick="applyBulkStatusToSelected()">⚡ Apply to Selected / Filtered</button>
+              <div class="col-md-3">
+                <button class="btn btn-dark btn-sm fw-bold w-100 shadow-sm" onclick="applyBulkStatusToSelected()">⚡ Apply Status</button>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-success btn-sm fw-bold w-100 shadow-sm" onclick="sendSupplierWhatsAppOrder()"><i class="bi bi-whatsapp me-1"></i> Send WhatsApp</button>
               </div>
             </div>
           </div>
@@ -116,7 +119,7 @@
                   <th>Order Date</th>
                   <th class="text-start">Item</th>
                   <th>Qty</th>
-                  <th>Supplier</th>
+                  <th>Supplier (Click to Edit)</th>
                   <th>State</th>
                   <th>Action</th>
                   <th>Received Date</th>
@@ -232,6 +235,22 @@
       cell.querySelector('select').focus();
     }
 
+    // ⚡ Orders Table-এ সরাসরি সাপ্লায়ার এডিট করার ড্রপডাউন ফাংশন
+    function toggleOrderSupplierEdit(cell, sheetRow) {
+      if (cell.querySelector('select')) return;
+      let currentVal = cell.innerText.trim();
+      let optionsHtml = uniqueSuppliersList.map(s => `<option value="${s}" ${s===currentVal?'selected':''}>${s}</option>`).join('');
+      cell.innerHTML = `<select class="cell-select" onblur="closeOrderSupplierSelect(this, ${sheetRow})" onchange="closeOrderSupplierSelect(this, ${sheetRow})">${optionsHtml}</select>`;
+      cell.querySelector('select').focus();
+    }
+
+    function closeOrderSupplierSelect(select, sheetRow) {
+      let val = select.value;
+      let p = select.parentElement;
+      p.innerHTML = `<span class="badge bg-secondary">${val}</span>`;
+      syncOrderChange(sheetRow, 'supplier', val);
+    }
+
     function closeCellEdit(input, type, rowId, field) { 
       let val = input.value.trim(); let p = input.parentElement; p.innerText = val || "-"; 
       if (type === 'item') {
@@ -249,12 +268,11 @@
       localEditedItems[rowId]['supplier'] = val;
     }
 
-    // ⚡ ১০০% রো-নাম্বার গ্যারান্টিড ট্র্যাক বাইন্ডিং ইঞ্জিন
     function syncOrderChange(sheetRow, field, val) {
       let origRow = dbOrders.find(r => r.rowNumber == sheetRow);
       if(!origRow) return;
       if(!memoryEditedOrders[sheetRow]) {
-        memoryEditedOrders[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks, rawDate: origRow.rawDate };
+        memoryEditedOrders[sheetRow] = { sheetRow: sheetRow, itemName: origRow.item, supplier: origRow.supplier, status: origRow.status, receivedDate: origRow.receivedDate, remarks: origRow.remarks, rawDate: origRow.rawDate };
       }
       memoryEditedOrders[sheetRow][field] = val;
       
@@ -269,6 +287,7 @@
         }
         origRow.status = val;
       }
+      if(field === 'supplier') origRow.supplier = val;
       if(field === 'receivedDate') origRow.receivedDate = val;
       if(field === 'remarks') origRow.remarks = val;
     }
@@ -304,13 +323,19 @@
     function reloadCurrentActiveGrid() {
       if (currentTab === 'orders') {
         document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="9">Syncing order entries...</td></tr>';
-        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { dbOrders = data; memoryEditedOrders = {}; populateSupplierFilter(data); applyFilters('orders'); });
+        fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { 
+          dbOrders = data; 
+          memoryEditedOrders = {}; 
+          uniqueSuppliersList = [...new Set(data.map(r => r.supplier).filter(Boolean))];
+          populateSupplierFilter(data); 
+          applyFilters('orders'); 
+        });
       } else if (currentTab === 'master-items' || currentTab === 'staff-dir') {
         localEditedItems = {}; localEditedStaff = {};
         document.getElementById("masterItemsTableBody").innerHTML = '<tr><td colspan="4">Syncing assets...</td></tr>';
         fetch(`${CORE_API_URL}?action=getMaster`).then(res => res.json()).then(data => { 
           dbMasterItems = data.items; dbStaffList = data.staffList; 
-          uniqueSuppliersList = [...new Set(dbMasterItems.map(i => i.supplier).filter(Boolean))];
+          uniqueSuppliersList = [...new Set([...dbMasterItems.map(i => i.supplier), ...dbOrders.map(o => o.supplier)].filter(Boolean))];
           populateMasterSupplierFilter(); 
           applyFilters('master-items'); renderStaffGrid(dbStaffList); 
         });
@@ -412,13 +437,10 @@
       if (!targetStatus) { triggerToast("Please select a status first!"); return; }
 
       let checkedBoxes = document.querySelectorAll('.order-row-checkbox:checked');
-      
-      // যদি ইউজার কোনো চেকবাক্স সিলেক্ট না করে, তবে ফিল্টার করা বর্তমান টেবিলের সব রো-তে এটি এপ্লাই হবে (যেমন: নির্দিষ্ট সাপ্লায়ার সিলেক্ট করা থাকলে শুধু তার ওপরই পড়বে)
       let targetRows = [];
       if (checkedBoxes.length > 0) {
         checkedBoxes.forEach(cb => targetRows.push(parseInt(cb.value)));
       } else {
-        // যদি টিক না দেওয়া থাকে, তবে ফিল্টার করা বর্তমান তালिकाओं থেকে রো নাম্বারগুলো নেওয়া হবে
         let start = (currentPages.orders - 1) * PAGE_SIZE;
         let pageData = filteredOrders.slice(start, start + PAGE_SIZE);
         targetRows = pageData.map(r => r.rowNumber);
@@ -431,7 +453,42 @@
       });
 
       renderOrdersTable();
-      triggerToast(`Successfully applied ${targetStatus} to selected orders! Click 'Save All Changes' to sync.`);
+      triggerToast(`Successfully applied ${targetStatus}! Click 'Save All Changes' to sync.`);
+    }
+
+    function sendSupplierWhatsAppOrder() {
+      let selectedSupplier = document.getElementById('ordFilterSupplier').value;
+      if (!selectedSupplier) {
+        triggerToast("⚠️ Please select a specific supplier from the 'Supplier' filter first!");
+        return;
+      }
+
+      let supplierOrders = filteredOrders.filter(r => r.supplier === selectedSupplier);
+      let checkedBoxes = document.querySelectorAll('.order-row-checkbox:checked');
+      if (checkedBoxes.length > 0) {
+        let checkedRowNumbers = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+        supplierOrders = supplierOrders.filter(r => checkedRowNumbers.includes(r.rowNumber));
+      }
+
+      if (supplierOrders.length === 0) {
+        triggerToast("No orders found for the selected supplier!");
+        return;
+      }
+
+      let now = new Date();
+      let timeStr = now.toLocaleString('en-US', { hour12: true });
+
+      let msg = `📦 *PURCHASE ORDER - GOYA CAFE*\n----------------------------------\n📅 *Date:* ${timeStr}\n👤 *Ordered By:* Admin\n----------------------------------\n\n*Order Details:*y\n`;
+      supplierOrders.forEach((item, index) => {
+        msg += `${index + 1}. *${item.item}* : ${item.qty} ${item.unit}`;
+        if (item.remarks || item.note) msg += ` (Note: ${item.remarks || item.note})`;
+        msg += `\n`;
+      });
+      msg += `\n----------------------------------\n⚠️ *Note:* দয়া করে ডেলিভারির সময় ইনভয়েস ও আইটেমের কোয়ালিটি চেক করিয়ে দেবেন। ধন্যবাদ!\nSent via Goya Admin Portal`;
+
+      let waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
+      triggerToast(`WhatsApp message generated for ${selectedSupplier}!`);
     }
 
     function renderOrdersTable() {
@@ -445,6 +502,7 @@
         let liveState = row.status.toUpperCase();
         let liveDate = row.receivedDate;
         let liveRem = row.remarks;
+        let liveSup = row.supplier;
         
         let sClass = 'badge-pending';
         if(liveState === 'RECEIVED') sClass = 'badge-received';
@@ -458,7 +516,7 @@
             <td><span class="text-muted small fw-bold">${row.date}</span></td>
             <td class="text-start fw-bold">${row.item}</td>
             <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
-            <td><span class="badge bg-secondary">${row.supplier}</span></td>
+            <td class="editable-cell" onclick="toggleOrderSupplierEdit(this, ${rNum})" title="Click to change supplier"><span class="badge bg-secondary">${liveSup}</span></td>
             <td><span class="badge-status ${sClass}">${liveState}</span></td>
             <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option><option value="REJECTED" ${liveState==='REJECTED'?'selected':''}>REJECTED</option></select></td>
             <td><input type="date" id="o_date_${rNum}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange(${rNum}, 'receivedDate', this.value)"></td>
@@ -549,7 +607,7 @@
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveMasterItemsGrid", items: itemsPayload }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Grid Synchronization Complete!"); reloadCurrentActiveGrid(); } });
       } 
       else if (currentTab === 'staff-dir') {
-        let staffPayload = Object.values(localEditedStaff); if(staffPayload.length ===0) { triggerToast("No modifications detected."); return; }
+        let staffPayload = Object.values(localEditedStaff); if(staffPayload.length === 0) { triggerToast("No modifications detected."); return; }
         fetch(CORE_API_URL, { method: "POST", body: JSON.stringify({ action: "adminSaveStaffGrid", staff: staffPayload }) }).then(res => res.json()).then(d => { if(d.status === "Success") { triggerToast("Staff Directory Secured!"); reloadCurrentActiveGrid(); } });
       }
     }
