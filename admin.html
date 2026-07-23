@@ -235,7 +235,6 @@
       cell.querySelector('select').focus();
     }
 
-    // ⚡ Orders Table-এ সরাসরি সাপ্লায়ার এডিট করার ড্রপডাউন ফাংশন
     function toggleOrderSupplierEdit(cell, sheetRow) {
       if (cell.querySelector('select')) return;
       let currentVal = cell.innerText.trim();
@@ -478,13 +477,13 @@
       let now = new Date();
       let timeStr = now.toLocaleString('en-US', { hour12: true });
 
-      let msg = `📦 *PURCHASE ORDER - GOYA CAFE*\n----------------------------------\n📅 *Date:* ${timeStr}\n👤 *Ordered By:* Admin\n----------------------------------\n\n*Order Details:*y\n`;
+      let msg = `📦 *PURCHASE ORDER - GOYA CAFE*\n----------------------------------\n📅 *Date:* ${timeStr}\n👤 *Ordered By:* Admin\n----------------------------------\n\n*Order Details:*\n`;
       supplierOrders.forEach((item, index) => {
         msg += `${index + 1}. *${item.item}* : ${item.qty} ${item.unit}`;
         if (item.remarks || item.note) msg += ` (Note: ${item.remarks || item.note})`;
         msg += `\n`;
       });
-      msg += `\n----------------------------------\n⚠️ *Note:* দয়া করে ডেলিভারির সময় ইনভয়েস ও আইটেমের কোয়ালিটি চেক করিয়ে দেবেন। ধন্যবাদ!\nSent via Goya Admin Portal`;
+      msg += `\n----------------------------------\nSent via Goya Admin Portal`;
 
       let waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
