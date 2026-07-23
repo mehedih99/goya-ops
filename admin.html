@@ -3,33 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Goya Portal - Core Administration</title>
+  <title>Goya Portal - Core Administration (Dark Edition)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    :root { --goya-bg: #d1d1d3; --goya-dark: #1f4e78; --goya-accent: #153552; }
-    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: #333; min-height: 100vh; }
-    .gate-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-    .top-navbar { background-color: var(--goya-dark); color: white; display: none; padding: 12px 20px; align-items: center; justify-content: space-between; }
-    .sidebar { background-color: white; min-height: 100vh; padding: 25px 15px; box-shadow: 4px 0 15px rgba(0,0,0,0.02); }
+    :root { 
+      --goya-bg: #121824; 
+      --goya-card-bg: #1e293b; 
+      --goya-dark: #0f172a; 
+      --goya-accent: #38bdf8; 
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    body { background-color: var(--goya-bg); font-family: 'Segoe UI', sans-serif; color: var(--text-main); min-height: 100vh; }
+    .gate-container { max-width: 400px; margin: 100px auto; background: var(--goya-card-bg); padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; border: 1px solid var(--border-color); }
+    .top-navbar { background-color: var(--goya-card-bg); color: white; display: none; padding: 12px 20px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); }
+    .sidebar { background-color: var(--goya-card-bg); min-height: 100vh; padding: 25px 15px; border-right: 1px solid var(--border-color); }
     .main-content { padding: 30px; }
-    .nav-custom .nav-link { color: #444; font-weight: 600; border-radius: 8px; padding: 11px 14px; margin-bottom: 6px; transition: all 0.2s; text-align: left; width: 100%; }
-    .nav-custom .nav-link.active { background-color: var(--goya-dark) !important; color: white !important; }
-    .data-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 25px; }
-    .table-responsive { border-radius: 10px; overflow-x: auto; border: 1px solid #dee2e6; background: white; }
-    .table th { background-color: var(--goya-dark) !important; color: white !important; font-size: 0.8rem; padding: 12px 6px; text-align: center; }
-    .table td { vertical-align: middle; text-align: center; font-size: 0.8rem; padding: 8px; white-space: nowrap; }
-    .editable-cell { cursor: pointer; background-color: #fffde7; font-weight: 500; }
-    .cell-input, .cell-select { width: 100%; border: 1px solid var(--goya-dark); border-radius: 4px; padding: 2px 6px; font-size: 0.8rem; }
-    .badge-status { padding: 4px 8px; border-radius: 30px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
-    .badge-pending { background-color: #fee2e2; color: #991b1b; }
-    .badge-ordered { background-color: #fef3c7; color: #92400e; }
-    .badge-received { background-color: #d1fae5; color: #065f46; }
-    .badge-not-received { background-color: #e5e7eb; color: #374151; }
-    .badge-rejected { background-color: #fee2e2; color: #b91c1c; font-weight: bold; }
-    .badge-done { background-color: #d1fae5; color: #065f46; }
-    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.85rem; }
+    
+    .nav-custom .nav-link { color: var(--text-muted); font-weight: 600; border-radius: 8px; padding: 11px 14px; margin-bottom: 6px; transition: all 0.2s; text-align: left; width: 100%; }
+    .nav-custom .nav-link:hover { background-color: rgba(56, 189, 248, 0.1); color: var(--text-main); }
+    .nav-custom .nav-link.active { background-color: var(--goya-accent) !important; color: #0f172a !important; font-weight: bold; }
+    
+    .data-card { background: var(--goya-card-bg); border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); margin-bottom: 25px; border: 1px solid var(--border-color); }
+    .card { background-color: var(--goya-card-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
+    
+    .form-control, .form-select { background-color: #0f172a !important; border: 1px solid var(--border-color) !important; color: var(--text-main) !important; }
+    .form-control:focus, .form-select:focus { border-color: var(--goya-accent) !important; box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25); color: var(--text-main) !important; }
+    
+    .table-responsive { border-radius: 10px; overflow-x: auto; border: 1px solid var(--border-color); background: var(--goya-card-bg); white-space: nowrap; -webkit-overflow-scrolling: touch; }
+    .table { min-width: 1100px; color: var(--text-main) !important; margin-bottom: 0; }
+    .table th { background-color: #0f172a !important; color: var(--text-main) !important; font-size: 0.8rem; padding: 12px 10px; text-align: center; border-bottom: 2px solid var(--border-color); }
+    .table td { vertical-align: middle; text-align: center; font-size: 0.8rem; padding: 10px; border-top: 1px solid var(--border-color); color: var(--text-main); }
+    
+    .editable-cell { cursor: pointer; background-color: rgba(254, 240, 138, 0.15) !important; font-weight: 500; color: #fef08a !important; }
+    .cell-input, .cell-select { width: 100%; border: 1px solid var(--goya-accent); border-radius: 4px; padding: 2px 6px; font-size: 0.8rem; background: #0f172a; color: white; }
+    
+    .badge-status { padding: 4px 10px; border-radius: 30px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
+    .badge-pending { background-color: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-ordered { background-color: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-received { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-not-received { background-color: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3); }
+    .badge-rejected { background-color: rgba(239, 68, 68, 0.2); color: #f87171; font-weight: bold; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-done { background-color: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    
+    .pagination-container { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); }
     #toastAlert { position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none; min-width: 280px; border-radius: 8px; }
+    
     @media (max-width: 768px) {
       .sidebar { display: none; position: fixed; top: 55px; left: 0; width: 260px; z-index: 9999; height: calc(100vh - 55px); }
       .sidebar.open { display: block; }
@@ -41,19 +62,19 @@
 <body>
 
   <div class="top-navbar">
-    <span class="fw-bold"><i class="bi bi-cpu-fill me-1"></i> GOYA CORE</span>
+    <span class="fw-bold"><i class="bi bi-cpu-fill me-1 text-info"></i> GOYA CORE (DARK)</span>
     <button class="btn btn-sm btn-outline-light" onclick="toggleMobileSidebar()"><i class="bi bi-list fs-5"></i></button>
   </div>
 
-  <div id="toastAlert" class="alert alert-dark shadow text-white bg-dark border-0 p-3">
+  <div id="toastAlert" class="alert shadow text-white bg-secondary border-0 p-3">
     <div class="d-flex align-items-center"><i class="bi bi-info-circle-fill me-2"></i><div id="toastMessage">Sync System Ready</div></div>
   </div>
 
   <div id="pinGate" class="gate-container">
-    <div class="fs-1 text-primary mb-2"><i class="bi bi-shield-lock-fill"></i></div>
-    <h5 class="fw-bold">GOYA CORE SECURITY CONSOLE</h5>
+    <div class="fs-1 text-info mb-2"><i class="bi bi-shield-lock-fill"></i></div>
+    <h5 class="fw-bold text-white">GOYA CORE SECURITY CONSOLE</h5>
     <input type="password" id="adminPinInput" class="form-control text-center form-control-lg fw-bold my-3" placeholder="••••" style="letter-spacing:6px;">
-    <button class="btn btn-dark w-100 fw-bold" onclick="verifyAdminGate()">Unlock Panel</button>
+    <button class="btn btn-info text-dark w-100 fw-bold" onclick="verifyAdminGate()">Unlock Panel</button>
     <p id="gateError" class="text-danger mt-2 small d-none">Invalid PIN.</p>
   </div>
 
@@ -71,27 +92,26 @@
 
       <div class="col-md-9 col-lg-10 main-content">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 g-2">
-          <h3 id="stageTitle" class="fw-bold m-0 text-dark">Orders Overrider Panel</h3>
+          <h3 id="stageTitle" class="fw-bold m-0 text-white">Orders Overrider Panel</h3>
           <div>
             <button class="btn btn-success fw-bold btn-sm px-3 me-2 shadow-sm" onclick="submitGlobalBulkChanges()"><i class="bi bi-cloud-check-fill me-1"></i> Save All Changes</button>
-            <button class="btn btn-white border bg-white shadow-sm btn-sm px-3" onclick="reloadCurrentActiveGrid()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            <button class="btn btn-outline-light btn-sm px-3" onclick="reloadCurrentActiveGrid()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
           </div>
         </div>
 
         <!-- ORDERS TAB -->
         <div id="panel-orders" class="admin-tab-content">
-          <div class="card p-3 bg-white border shadow-sm mb-3" style="font-size:0.82rem;">
+          <div class="card p-3 border shadow-sm mb-3" style="font-size:0.82rem;">
             <div class="row g-2 align-items-center">
-              <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📅 Order Date Filter</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
-              <div class="col-md-3 col-6"><label class="fw-bold text-secondary mb-1">📦 Supplier</label><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
-              <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">⏳ State</label><select id="ordFilterState" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="ORDERED">ORDERED</option><option value="RECEIVED">RECEIVED</option><option value="NOT RECEIVED">NOT RECEIVED</option><option value="REJECTED">REJECTED</option></select></div>
-              <div class="col-md-2 col-6"><label class="fw-bold text-secondary mb-1">🔍 Search</label><input type="text" id="ordFilterSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('orders')"></div>
+              <div class="col-md-3 col-6"><label class="fw-bold text-muted mb-1">📅 Order Date Filter</label><input type="date" id="ordFilterDate" class="form-control form-control-sm" onchange="applyFilters('orders')"></div>
+              <div class="col-md-3 col-6"><label class="fw-bold text-muted mb-1">📦 Supplier</label><select id="ordFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All Suppliers</option></select></div>
+              <div class="col-md-2 col-6"><label class="fw-bold text-muted mb-1">⏳ State</label><select id="ordFilterState" class="form-select form-select-sm" onchange="applyFilters('orders')"><option value="">All States</option><option value="PENDING">PENDING</option><option value="ORDERED">ORDERED</option><option value="RECEIVED">RECEIVED</option><option value="NOT RECEIVED">NOT RECEIVED</option><option value="REJECTED">REJECTED</option></select></div>
+              <div class="col-md-2 col-6"><label class="fw-bold text-muted mb-1">🔍 Search</label><input type="text" id="ordFilterSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('orders')"></div>
               <div class="col-md-2 col-12 text-md-center"><div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" id="ordPendingToggle" onchange="applyFilters('orders')"><label class="form-check-label fw-bold text-danger" for="ordPendingToggle">Pending Only</label></div></div>
             </div>
             
-            <!-- ⚡ Bulk Action & WhatsApp Toolbar -->
-            <div class="row g-2 align-items-center mt-3 pt-3 border-top bg-light p-2 rounded">
-              <div class="col-md-3 fw-bold text-dark small"><i class="bi bi-lightning-fill text-warning"></i> Bulk Actions:</div>
+            <div class="row g-2 align-items-center mt-3 pt-3 border-top border-secondary p-2 rounded" style="background: rgba(255,255,255,0.03);">
+              <div class="col-md-3 fw-bold text-warning small"><i class="bi bi-lightning-fill"></i> Bulk Actions:</div>
               <div class="col-md-3">
                 <select id="bulkStatusSelect" class="form-select form-select-sm fw-bold">
                   <option value="">-- Status --</option>
@@ -103,7 +123,7 @@
                 </select>
               </div>
               <div class="col-md-3">
-                <button class="btn btn-dark btn-sm fw-bold w-100 shadow-sm" onclick="applyBulkStatusToSelected()">⚡ Apply Status</button>
+                <button class="btn btn-outline-info btn-sm fw-bold w-100 shadow-sm" onclick="applyBulkStatusToSelected()">⚡ Apply Status</button>
               </div>
               <div class="col-md-3">
                 <button class="btn btn-success btn-sm fw-bold w-100 shadow-sm" onclick="sendSupplierWhatsAppOrder()"><i class="bi bi-whatsapp me-1"></i> Send WhatsApp</button>
@@ -112,34 +132,36 @@
           </div>
 
           <div class="data-card">
-            <div class="table-responsive"><table class="table table-hover table-striped mb-0">
-              <thead>
-                <tr>
-                  <th style="width: 30px;"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllOrders(this)"></th>
-                  <th>Order Date</th>
-                  <th class="text-start">Item</th>
-                  <th>Qty</th>
-                  <th>Supplier (Edit)</th>
-                  <th>State</th>
-                  <th>Action</th>
-                  <th>Received Date</th>
-                  <th>Order Note</th>
-                  <th>Remarks</th>
-                </tr>
-              </thead>
-              <tbody id="ordersTableBody"></tbody>
-            </table></div>
+            <div class="table-responsive">
+              <table class="table table-hover table-striped mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 45px;"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllOrders(this)"></th>
+                    <th style="width: 140px;">Order Date</th>
+                    <th class="text-start" style="min-width: 200px;">Item</th>
+                    <th style="width: 110px;">Qty</th>
+                    <th style="width: 140px;">Supplier (Edit)</th>
+                    <th style="width: 120px;">State</th>
+                    <th style="width: 140px;">Action</th>
+                    <th style="width: 160px;">Received Date</th>
+                    <th style="min-width: 185px;" class="text-start">Order Note</th>
+                    <th style="width: 160px;">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody"></tbody>
+              </table>
+            </div>
             <div class="pagination-container"><div id="ordersPageInfo" class="text-muted"></div><div id="ordersPaginationBtns" class="btn-group btn-group-sm"></div></div>
           </div>
         </div>
 
         <!-- MASTER ITEMS TAB -->
         <div id="panel-master-items" class="admin-tab-content d-none">
-          <div class="card p-3 bg-white border shadow-sm mb-3">
+          <div class="card p-3 border shadow-sm mb-3">
             <div class="row g-2 align-items-center">
               <div class="col-md-5"><input type="text" id="masterItemsSearch" class="form-control form-control-sm" placeholder="🔍 Search lines..." oninput="applyFilters('master-items')"></div>
               <div class="col-md-4"><select id="masterFilterSupplier" class="form-select form-select-sm" onchange="applyFilters('master-items')"><option value="">All Suppliers Filter</option></select></div>
-              <div class="col-md-3"><button class="btn btn-primary btn-sm w-100 fw-bold" onclick="addNewItemRowToGrid()">+ Add Row</button></div>
+              <div class="col-md-3"><button class="btn btn-info btn-sm w-100 fw-bold text-dark" onclick="addNewItemRowToGrid()">+ Add Row</button></div>
             </div>
           </div>
           <div class="data-card">
@@ -162,7 +184,11 @@
 
         <!-- PRODUCTION TAB -->
         <div id="panel-production" class="admin-tab-content d-none">
-          <div class="card p-3 bg-white border mb-3"><div class="row g-2"><div class="col-md-4"><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div><div class="col-md-4"><select id="prodStatusFilter" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div><div class="col-md-4"><input type="text" id="prodSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('production')"></div></div></div>
+          <div class="card p-3 border mb-3"><div class="row g-2">
+            <div class="col-md-4"><label class="fw-bold text-muted mb-1 small">📅 Production Date Filter</label><input type="date" id="prodFilterDate" class="form-control form-control-sm" onchange="applyFilters('production')"></div>
+            <div class="col-md-4"><label class="fw-bold text-muted mb-1 small">⏳ Status</label><select id="prodStatusFilter" class="form-select form-select-sm" onchange="applyFilters('production')"><option value="">All Status</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+            <div class="col-md-4"><label class="fw-bold text-muted mb-1 small">🔍 Search</label><input type="text" id="prodSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('production')"></div>
+          </div></div>
           <div class="data-card">
             <div class="table-responsive"><table class="table table-hover table-striped mb-0">
               <thead><tr><th>Date</th><th class="text-start">Item</th><th>Qty</th><th>Unit</th><th>By</th><th>State</th></tr></thead>
@@ -174,7 +200,11 @@
 
         <!-- WASTAGE TAB -->
         <div id="panel-wastage" class="admin-tab-content d-none">
-          <div class="card p-3 bg-white border mb-3"><div class="row g-2"><div class="col-md-4"><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div><div class="col-md-4"><select id="wasteStatusFilter" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div><div class="col-md-4"><input type="text" id="wasteSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('wastage')"></div></div></div>
+          <div class="card p-3 border mb-3"><div class="row g-2">
+            <div class="col-md-4"><label class="fw-bold text-muted mb-1 small">📅 Wastage Date Filter</label><input type="date" id="wasteFilterDate" class="form-control form-control-sm" onchange="applyFilters('wastage')"></div>
+            <div class="col-md-4"><label class="fw-bold text-muted mb-1 small">⏳ Status</label><select id="wasteStatusFilter" class="form-select form-select-sm" onchange="applyFilters('wastage')"><option value="">All Status</option><option value="PENDING">PENDING</option><option value="DONE">DONE</option></select></div>
+            <div class="col-md-4"><label class="fw-bold text-muted mb-1 small">🔍 Search</label><input type="text" id="wasteSearch" class="form-control form-control-sm" placeholder="Search..." oninput="applyFilters('wastage')"></div>
+          </div></div>
           <div class="data-card">
             <div class="table-responsive"><table class="table table-hover table-striped mb-0">
               <thead><tr><th>Date</th><th class="text-start">Item</th><th>Qty</th><th>Unit</th><th>Reason</th><th>By</th><th>State</th></tr></thead>
@@ -385,7 +415,14 @@
         let search = document.getElementById("prodSearch").value.toLowerCase();
         let stat = document.getElementById("prodStatusFilter").value.toUpperCase();
         filteredProduction = dbProduction.filter(r => {
-          return (!fDate || r.date.includes(fDate)) && (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status.toUpperCase() === stat);
+          // ⚡ সঠিক ডেট ফিল্টারিং লজিক (YYYY-MM-DD ম্যাচিং)
+          let matchDate = true;
+          if (fDate) {
+            let rowDateObj = new Date(r.rawDate || r.date);
+            let fDateObj = new Date(fDate);
+            matchDate = !isNaN(rowDateObj) && rowDateObj.toISOString().split('T')[0] === fDateObj.toISOString().split('T')[0];
+          }
+          return matchDate && (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status.toUpperCase() === stat);
         });
         currentPages.production = 1; renderProductionTable();
       } 
@@ -394,7 +431,14 @@
         let search = document.getElementById("wasteSearch").value.toLowerCase();
         let stat = document.getElementById("wasteStatusFilter").value.toUpperCase();
         filteredWastage = dbWastage.filter(r => {
-          return (!fDate || r.date.includes(fDate)) && (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status.toUpperCase() === stat);
+          // ⚡ সঠিক ডেট ফিল্টারিং লজিক (YYYY-MM-DD ম্যাচিং)
+          let matchDate = true;
+          if (fDate) {
+            let rowDateObj = new Date(r.rawDate || r.date);
+            let fDateObj = new Date(fDate);
+            matchDate = !isNaN(rowDateObj) && rowDateObj.toISOString().split('T')[0] === fDateObj.toISOString().split('T')[0];
+          }
+          return matchDate && (!search || r.item.toLowerCase().includes(search)) && (!stat || r.status.toUpperCase() === stat);
         });
         currentPages.wastage = 1; renderWastageTable();
       }
@@ -410,11 +454,11 @@
         infoDiv.innerText = `Showing ${start}-${end} of ${totalItems} rows`;
       }
       let container = document.getElementById(targetDivId); if (!container) return; container.innerHTML = ""; if (totalPages <= 1) return;
-      let prevBtn = `<button class="btn btn-outline-dark btn-sm" ${currPage===1?'disabled':''} onclick="changePage('${tabKey}', ${currPage-1})">Prev</button>`;
-      let nextBtn = `<button class="btn btn-outline-dark btn-sm" ${currPage===totalPages?'disabled':''} onclick="changePage('${tabKey}', ${currPage+1})">Next</button>`;
+      let prevBtn = `<button class="btn btn-outline-light btn-sm" ${currPage===1?'disabled':''} onclick="changePage('${tabKey}', ${currPage-1})">Prev</button>`;
+      let nextBtn = `<button class="btn btn-outline-light btn-sm" ${currPage===totalPages?'disabled':''} onclick="changePage('${tabKey}', ${currPage+1})">Next</button>`;
       let pagesHtml = "";
       for (let p = Math.max(1, currPage - 2); p <= Math.min(totalPages, currPage + 2); p++) {
-        pagesHtml += `<button class="btn ${p===currPage?'btn-dark':'btn-outline-dark'} btn-sm" onclick="changePage('${tabKey}', ${p})">${p}</button>`;
+        pagesHtml += `<button class="btn ${p===currPage?'btn-info text-dark':'btn-outline-light'} btn-sm" onclick="changePage('${tabKey}', ${p})">${p}</button>`;
       }
       container.innerHTML = prevBtn + pagesHtml + nextBtn;
     }
@@ -481,7 +525,6 @@
       let msg = `📦 *PURCHASE ORDER - GOYA CAFE*\n----------------------------------\n📅 *Date:* ${timeStr}\n👤 *Ordered By:* Admin\n----------------------------------\n\n*Order Details:*\n`;
       supplierOrders.forEach((item, index) => {
         msg += `${index + 1}. *${item.item}* : ${item.qty} ${item.unit}`;
-        // ⚡ WhatsApp মেসেজে রিমার্কস এর পরিবর্তে স্টাফের দেওয়া Order Note যুক্ত করা হলো
         if (item.note) msg += ` (Note: ${item.note})`;
         msg += `\n`;
       });
@@ -516,8 +559,8 @@
           <tr>
             <td><input type="checkbox" class="order-row-checkbox" value="${rNum}"></td>
             <td><span class="text-muted small fw-bold">${row.date}</span></td>
-            <td class="text-start fw-bold">${row.item}</td>
-            <td><span class="badge bg-light text-dark border">${row.qty} ${row.unit}</span></td>
+            <td class="text-start fw-bold text-white">${row.item}</td>
+            <td><span class="badge bg-dark text-info border border-secondary">${row.qty} ${row.unit}</span></td>
             <td class="editable-cell" onclick="toggleOrderSupplierEdit(this, ${rNum})" title="Click to change supplier"><span class="badge bg-secondary">${liveSup}</span></td>
             <td><span class="badge-status ${sClass}">${liveState}</span></td>
             <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option><option value="REJECTED" ${liveState==='REJECTED'?'selected':''}>REJECTED</option></select></td>
@@ -534,7 +577,7 @@
       let start = (currentPages['master-items'] - 1) * PAGE_SIZE;
       let pageData = filteredMasterItems.slice(start, start + PAGE_SIZE);
       pageData.forEach((item, idx) => {
-        tbody.innerHTML += `<tr id="item_tr_${item.rowId}"><td>${start+idx+1}</td><td class="text-start editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'name')">${item.name}</td><td class="editable-cell fw-bold text-primary" onclick="toggleSupplierDropdownEdit(this, '${item.rowId}')">${item.supplier}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'unit')">${item.unit}</td></tr>`;
+        tbody.innerHTML += `<tr id="item_tr_${item.rowId}"><td>${start+idx+1}</td><td class="text-start editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'name')">${item.name}</td><td class="editable-cell fw-bold text-info" onclick="toggleSupplierDropdownEdit(this, '${item.rowId}')">${item.supplier}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'item', '${item.rowId}', 'unit')">${item.unit}</td></tr>`;
       });
       setupPaginationControls(filteredMasterItems.length, 'master-items', 'masterPaginationBtns', 'masterPageInfo');
     }
@@ -543,11 +586,12 @@
       const tbody = document.getElementById("productionTableBody"); tbody.innerHTML = "";
       let start = (currentPages.production - 1) * PAGE_SIZE;
       let pageData = filteredProduction.slice(start, start + PAGE_SIZE);
+      if (pageData.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-muted">No production records found for this date.</td></tr>'; return; }
       pageData.forEach((row) => {
         let rNum = row.rowNumber;
         let liveState = row.status.toUpperCase();
         let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange(${rNum}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold text-white">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncProdChange(${rNum}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredProduction.length, 'production', 'prodPaginationBtns', 'prodPageInfo');
     }
@@ -556,11 +600,12 @@
       const tbody = document.getElementById("wastageTableBody"); tbody.innerHTML = "";
       let start = (currentPages.wastage - 1) * PAGE_SIZE;
       let pageData = filteredWastage.slice(start, start + PAGE_SIZE);
+      if (pageData.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="p-3 text-muted">No wastage records found for this date.</td></tr>'; return; }
       pageData.forEach((row) => {
         let rNum = row.rowNumber;
         let liveState = row.status.toUpperCase();
         let sClass = liveState === 'DONE' ? 'badge-done' : 'badge-pending';
-        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange(${rNum}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
+        tbody.innerHTML += `<tr><td>${row.date}</td><td class="text-start fw-bold text-white">${row.item}</td><td>${row.qty}</td><td>${row.unit}</td><td>${row.reason}</td><td>${row.by}</td><td><span class="badge-status ${sClass} me-2">${liveState}</span><select class="form-select form-select-sm fw-bold d-inline-block w-auto" onchange="syncWasteChange(${rNum}, this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="DONE" ${liveState==='DONE'?'selected':''}>DONE</option></select></td></tr>`;
       });
       setupPaginationControls(filteredWastage.length, 'wastage', 'wastePaginationBtns', 'wastePageInfo');
     }
@@ -568,7 +613,7 @@
     function renderStaffGrid(list) {
       const tbody = document.getElementById("staffTableBody"); tbody.innerHTML = "";
       list.forEach(st => {
-        tbody.innerHTML += `<tr><td class="editable-cell fw-bold text-primary" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'code')">${st.code}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'name')">${st.name}</td></tr>`;
+        tbody.innerHTML += `<tr><td class="editable-cell fw-bold text-info" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'code')">${st.code}</td><td class="editable-cell" onclick="toggleCellToEdit(this, 'staff', '${st.rowId}', 'name')">${st.name}</td></tr>`;
       });
     }
 
@@ -576,7 +621,7 @@
     function addNewItemRowToGrid() {
       newItemCounter++; let tempId = `NEW_${newItemCounter}`;
       const tbody = document.getElementById("masterItemsTableBody"); let row = document.createElement('tr');
-      row.innerHTML = `<td>+</td><td class="text-start editable-cell text-danger" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'name')">New Product</td><td class="editable-cell text-danger fw-bold" onclick="toggleSupplierDropdownEdit(this, '${tempId}')">Select Supplier</td><td class="editable-cell text-danger" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'unit')">PCS</td>`;
+      row.innerHTML = `<td>+</td><td class="text-start editable-cell text-warning" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'name')">New Product</td><td class="editable-cell text-warning fw-bold" onclick="toggleSupplierDropdownEdit(this, '${tempId}')">Select Supplier</td><td class="editable-cell text-warning" onclick="toggleCellToEdit(this, 'item', '${tempId}', 'unit')">PCS</td>`;
       tbody.prepend(row);
       localEditedItems[tempId] = { rowId: "NEW", name: "New Product", supplier: uniqueSuppliersList[0]||"Internal", unit: "PCS" };
     }
@@ -585,7 +630,7 @@
     function addNewStaffRowToGrid() {
       newStaffCounter++; let tempId = `NEW_${newStaffCounter}`;
       const tbody = document.getElementById("staffTableBody"); let row = document.createElement('tr');
-      row.innerHTML = `<td class="editable-cell fw-bold text-danger" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'code')">0000</td><td class="editable-cell text-danger" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'name')">Full Name</td>`;
+      row.innerHTML = `<td class="editable-cell fw-bold text-warning" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'code')">0000</td><td class="editable-cell text-warning" onclick="toggleCellToEdit(this, 'staff', '${tempId}', 'name')">Full Name</td>`;
       tbody.prepend(row); localEditedStaff[tempId] = { rowId: "NEW", code: "0000", name: "Full Name" };
     }
 
