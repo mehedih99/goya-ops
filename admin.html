@@ -17,11 +17,11 @@
     .nav-custom .nav-link.active { background-color: var(--goya-dark) !important; color: white !important; }
     .data-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); margin-bottom: 25px; }
     .table-responsive { border-radius: 10px; overflow-x: auto; border: 1px solid #dee2e6; background: white; }
-    .table th { background-color: var(--goya-dark) !important; color: white !important; font-size: 0.82rem; padding: 12px 8px; text-align: center; }
-    .table td { vertical-align: middle; text-align: center; font-size: 0.82rem; padding: 8px; white-space: nowrap; }
+    .table th { background-color: var(--goya-dark) !important; color: white !important; font-size: 0.8rem; padding: 12px 6px; text-align: center; }
+    .table td { vertical-align: middle; text-align: center; font-size: 0.8rem; padding: 8px; white-space: nowrap; }
     .editable-cell { cursor: pointer; background-color: #fffde7; font-weight: 500; }
-    .cell-input, .cell-select { width: 100%; border: 1px solid var(--goya-dark); border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; }
-    .badge-status { padding: 4px 8px; border-radius: 30px; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; }
+    .cell-input, .cell-select { width: 100%; border: 1px solid var(--goya-dark); border-radius: 4px; padding: 2px 6px; font-size: 0.8rem; }
+    .badge-status { padding: 4px 8px; border-radius: 30px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; }
     .badge-pending { background-color: #fee2e2; color: #991b1b; }
     .badge-ordered { background-color: #fef3c7; color: #92400e; }
     .badge-received { background-color: #d1fae5; color: #065f46; }
@@ -115,14 +115,15 @@
             <div class="table-responsive"><table class="table table-hover table-striped mb-0">
               <thead>
                 <tr>
-                  <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllOrders(this)"></th>
+                  <th style="width: 30px;"><input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAllOrders(this)"></th>
                   <th>Order Date</th>
                   <th class="text-start">Item</th>
                   <th>Qty</th>
-                  <th>Supplier (Click to Edit)</th>
+                  <th>Supplier (Edit)</th>
                   <th>State</th>
                   <th>Action</th>
                   <th>Received Date</th>
+                  <th>Order Note</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
@@ -321,7 +322,7 @@
 
     function reloadCurrentActiveGrid() {
       if (currentTab === 'orders') {
-        document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="9">Syncing order entries...</td></tr>';
+        document.getElementById("ordersTableBody").innerHTML = '<tr><td colspan="10">Syncing order entries...</td></tr>';
         fetch(`${CORE_API_URL}?action=getHistory`).then(res => res.json()).then(data => { 
           dbOrders = data; 
           memoryEditedOrders = {}; 
@@ -480,7 +481,8 @@
       let msg = `📦 *PURCHASE ORDER - GOYA CAFE*\n----------------------------------\n📅 *Date:* ${timeStr}\n👤 *Ordered By:* Admin\n----------------------------------\n\n*Order Details:*\n`;
       supplierOrders.forEach((item, index) => {
         msg += `${index + 1}. *${item.item}* : ${item.qty} ${item.unit}`;
-        if (item.remarks || item.note) msg += ` (Note: ${item.remarks || item.note})`;
+        // ⚡ WhatsApp মেসেজে রিমার্কস এর পরিবর্তে স্টাফের দেওয়া Order Note যুক্ত করা হলো
+        if (item.note) msg += ` (Note: ${item.note})`;
         msg += `\n`;
       });
       msg += `\n----------------------------------\nSent via Goya Admin Portal`;
@@ -493,7 +495,7 @@
     function renderOrdersTable() {
       const tbody = document.getElementById("ordersTableBody"); tbody.innerHTML = "";
       document.getElementById("selectAllCheckbox").checked = false;
-      if (filteredOrders.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="p-3 text-muted">No records.</td></tr>'; return; }
+      if (filteredOrders.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-3 text-muted">No records.</td></tr>'; return; }
       let start = (currentPages.orders - 1) * PAGE_SIZE;
       let pageData = filteredOrders.slice(start, start + PAGE_SIZE);
       pageData.forEach((row) => {
@@ -501,6 +503,7 @@
         let liveState = row.status.toUpperCase();
         let liveDate = row.receivedDate;
         let liveRem = row.remarks;
+        let liveNote = row.note;
         let liveSup = row.supplier;
         
         let sClass = 'badge-pending';
@@ -519,6 +522,7 @@
             <td><span class="badge-status ${sClass}">${liveState}</span></td>
             <td><select class="form-select form-select-sm fw-bold" onchange="syncOrderChange(${rNum}, 'status', this.value)"><option value="PENDING" ${liveState==='PENDING'?'selected':''}>PENDING</option><option value="ORDERED" ${liveState==='ORDERED'?'selected':''}>ORDERED</option><option value="RECEIVED" ${liveState==='RECEIVED'?'selected':''}>RECEIVED</option><option value="NOT RECEIVED" ${liveState==='NOT RECEIVED'?'selected':''}>NOT RECEIVED</option><option value="REJECTED" ${liveState==='REJECTED'?'selected':''}>REJECTED</option></select></td>
             <td><input type="date" id="o_date_${rNum}" class="form-control form-control-sm" value="${liveDate||""}" ${liveState!=='RECEIVED'?'disabled':''} onchange="syncOrderChange(${rNum}, 'receivedDate', this.value)"></td>
+            <td class="text-muted small text-start">${liveNote || '-'}</td>
             <td><input type="text" class="form-control form-control-sm" value="${liveRem||""}" oninput="syncOrderChange(${rNum}, 'remarks', this.value)"></td>
           </tr>`;
       });
